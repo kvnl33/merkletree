@@ -14,13 +14,14 @@ class Node(object):
     and sibling (sib) node. It can also be aware of whether it is on the left or right hand side (side).
     data is hashed automatically by default, but does not have to be, if prehashed param is set to True.
     """
-    __slots__ = ['l', 'r', 'p', 'sib', 'side', 'val']
+    __slots__ = ['l', 'r', 'p', 'sib', 'side', 'val', 'idx']
 
     def __init__(self, data, prehashed=False):
         if prehashed:
-            self.val = data
+            self.val = data[0]
         else:
-            self.val = hash_function(data).digest()
+            self.val = hash_function(data[0]).digest()
+        self.idx = data[1]
         self.l = None
         self.r = None
         self.p = None
@@ -28,7 +29,7 @@ class Node(object):
         self.side = None
 
     def __repr__(self):
-        return "Val: <" + str(codecs.encode(self.val, 'hex_codec')) + ">"
+        return #"Val: <" + str(codecs.encode(self.val, 'hex_codec')) + ">"
 
 
 class MerkleTree(object):
@@ -104,7 +105,7 @@ class MerkleTree(object):
         if len(leaves) % 2 == 1:
             odd = leaves.pop(-1)
         for i in range(0, len(leaves), 2):
-            newnode = Node(leaves[i].val + leaves[i + 1].val)
+            newnode = Node((leaves[i].val + leaves[i + 1].val, max(leaves[i].idx, leaves[i+1].idx)))
             newnode.l, newnode.r = leaves[i], leaves[i + 1]
             leaves[i].side, leaves[i + 1].side, leaves[i].p, leaves[i + 1].p = 'L', 'R', newnode, newnode
             leaves[i].sib, leaves[i + 1].sib = leaves[i + 1], leaves[i]
@@ -118,11 +119,11 @@ class MerkleTree(object):
         """
         chain = []
         this = self.leaves[index]
-        chain.append((this.val, 'SELF'))
+        chain.append(((this.val, this.idx), 'SELF'))
         while this.p:
-            chain.append((this.sib.val, this.sib.side))
+            chain.append(((this.sib.val, this.sib.idx), this.sib.side))
             this = this.p
-        chain.append((this.val, 'ROOT'))
+        chain.append(((this.val,this.idx), 'ROOT'))
         return chain
 
     def get_all_chains(self):
@@ -139,7 +140,7 @@ class MerkleTree(object):
     def get_all_hex_chains(self):
         """Assemble and return a list of all chains for all nodes to the merkle root, hex encoded.
         """
-        return [[(codecs.encode(i[0], 'hex_codec'), i[1]) for i in j] for j in self.get_all_chains()]
+        return [[(codecs.encode(i[0][0], 'hex_codec'), i[1]) for i in j] for j in self.get_all_chains()]
 
     def _get_whole_subtrees(self):
         """Returns an array of nodes in the tree that have balanced subtrees beneath them,
