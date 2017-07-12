@@ -35,7 +35,7 @@ class Node(object):
         self.side = None
 
     def __repr__(self):
-        return #"Val: <" + str(codecs.encode(self.val, 'hex_codec')) + ">"
+        return "Val: <" + str(codecs.encode(self.val, 'hex_codec')) + ">"
 
 
 class MerkleTree(object):
@@ -64,7 +64,7 @@ class MerkleTree(object):
     def add_hash(self, value):
         """Add a Node based on a precomputed, hex encoded, hash value.
         """
-        self.leaves.append(Node(codecs.decode(value, 'hex_codec'), prehashed=True))
+        self.leaves.append(Node((codecs.decode(value[0], 'hex_codec'),value[1]), prehashed=True))
 
     def clear(self):
         """Clears the Merkle Tree by releasing the Merkle root and each leaf's references, the rest
@@ -117,6 +117,14 @@ class MerkleTree(object):
             leaves[i].sib, leaves[i + 1].sib = leaves[i + 1], leaves[i]
             new.append(newnode)
         if odd:
+            #   for the node that is the odd one out, we will hash it with each other
+            #   EDIT: Taken out, the odd will just be passed along
+            # oddnode = Node((odd.val + odd.val, odd.idx))
+            # oddnode.l = oddnode.r = odd
+            # odd.p = oddnode
+            # odd.sib = odd
+            # odd.side = 'L'  #   doesn't matter what you assign it to, we will use right for convention
+            # new.append(oddnode)
             new.append(odd)
         return new
 
@@ -169,7 +177,7 @@ class MerkleTree(object):
         new_node = Node(data, prehashed=prehashed)
         self.leaves.append(new_node)
         for node in reversed(subtrees):
-            new_parent = Node(node.val + new_node.val)
+            new_parent = Node( (node.val + new_node.val , max(node.idx, new_node.idx)))
             node.p, new_node.p = new_parent, new_parent
             new_parent.l, new_parent.r = node, new_node
             node.sib, new_node.sib = new_node, node
