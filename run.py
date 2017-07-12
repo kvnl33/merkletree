@@ -7,9 +7,12 @@ k = tree.root
 
 if k:
 	print "HELLO"
-	print "Merkle Root:" + codecs.encode(k.val, 'hex_codec')
+	tree_root = codecs.encode(k.val, 'hex_codec')
+	print tree_root
 	print k.idx 
 
 m = tree.get_all_hex_chains()
-print m
 
+for chain in m:
+	print chain
+	print check_hex_chain(chain)==tree_root

@@ -1,3 +1,9 @@
+#   Modifed to keep track of the greatest index in each successive parent node
+#   A Merkle proof is returned based on the index that is queried
+#   For an odd number of leaves, we need to change the merkle tree to hash 
+#   with itself instead
+#   Question that remains is: Are the leaves global indices or transactions????
+
 from hashlib import sha256
 from math import log
 import codecs
@@ -135,12 +141,12 @@ class MerkleTree(object):
         """Assemble and return the chain leading from a given node to the merkle root of this tree
         with hash values in hex form
         """
-        return [(codecs.encode(i[0], 'hex_codec'), i[1]) for i in self.get_chain(index)]
+        return [((codecs.encode(i[0][0], 'hex_codec'), i[0][1]), i[1]) for i in self.get_chain(index)]
 
     def get_all_hex_chains(self):
         """Assemble and return a list of all chains for all nodes to the merkle root, hex encoded.
         """
-        return [[(codecs.encode(i[0][0], 'hex_codec'), i[1]) for i in j] for j in self.get_all_chains()]
+        return [[((codecs.encode(i[0][0], 'hex_codec'), i[0][1]), i[1]) for i in j] for j in self.get_all_chains()]
 
     def _get_whole_subtrees(self):
         """Returns an array of nodes in the tree that have balanced subtrees beneath them,
@@ -192,7 +198,7 @@ def check_chain(chain):
 def check_hex_chain(chain):
     """Verify a merkle chain, with hashes hex encoded, to see if the Merkle root can be reproduced.
     """
-    return codecs.encode(check_chain([(codecs.decode(i[0], 'hex_codec'), i[1]) for i in chain]), 'hex_codec')
+    return codecs.encode(check_chain([(codecs.decode(i[0][0], 'hex_codec'), i[1]) for i in chain]), 'hex_codec')
 
 
 def join_chains(low, high):
