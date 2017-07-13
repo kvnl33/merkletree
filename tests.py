@@ -21,7 +21,7 @@ def chain(tree):
 
 @pytest.fixture
 def hexchain(tree):
-    return tree.get_hex_chain(0)
+    return tree.get_proof(0)
 
 
 def test_root(tree):

@@ -47,10 +47,9 @@ def main():
 
 	#Run a test 100 times
 	correct = incorrect = 0
-	for _ in range(0,100000):
+	for _ in range(0,100):
 
 		c = randint(0,999)
-		print "Chosen index: " + str(c) 
 		#The client will make a request using c, and collect the ground truth
 
 		d = find_nearest_above(block_headers_keys, c)
@@ -62,9 +61,10 @@ def main():
 
 
 		chosen = avail.index(e)
-		proof = tree.get_hex_chain(chosen)
+		proof = tree.get_proof(chosen)
 
 		data = tree.leaves[chosen].data
+		print "Chosen index: " + str(c) + ', Returned data: ' + str(data) 
 
 		#check if the data returned is hashed to the first element in the proof
 		if hash_function(data).hexdigest() == proof[0][0][0]:

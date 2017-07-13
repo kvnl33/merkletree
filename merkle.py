@@ -68,7 +68,7 @@ class MerkleTree(object):
     def add_hash(self, value):
         """Add a Node based on a precomputed, hex encoded, hash value.
         """
-        self.leaves.append(Node((codecs.decode(value[0], 'hex_codec'),value[1]), prehashed=True))
+        self.leaves.append(Node(((codecs.decode(value[0][0], 'hex_codec'),value[0][1]),value[1]), prehashed=True))
 
     def clear(self):
         """Clears the Merkle Tree by releasing the Merkle root and each leaf's references, the rest
@@ -132,7 +132,7 @@ class MerkleTree(object):
             new.append(odd)
         return new
 
-    def get_chain(self, index):
+    def _get_proof(self, index):
         """Assemble and return the chain leading from a given node to the merkle root of this tree.
         """
         chain = []
@@ -144,21 +144,21 @@ class MerkleTree(object):
         chain.append(((this.val,this.idx), 'ROOT'))
         return chain
 
-    def get_all_chains(self):
+    def _get_all_proofs(self):
         """Assemble and return a list of all chains for all leaf nodes to the merkle root.
         """
-        return [self.get_chain(i) for i in range(len(self.leaves))]
+        return [self._get_proof(i) for i in range(len(self.leaves))]
 
-    def get_hex_chain(self, index):
+    def get_proof(self, index):
         """Assemble and return the chain leading from a given node to the merkle root of this tree
         with hash values in hex form
         """
-        return [((codecs.encode(i[0][0], 'hex_codec'), i[0][1]), i[1]) for i in self.get_chain(index)]
+        return [((codecs.encode(i[0][0], 'hex_codec'), i[0][1]), i[1]) for i in self._get_proof(index)]
 
-    def get_all_hex_chains(self):
+    def get_all_proofs(self):
         """Assemble and return a list of all chains for all nodes to the merkle root, hex encoded.
         """
-        return [[((codecs.encode(i[0][0], 'hex_codec'), i[0][1]), i[1]) for i in j] for j in self.get_all_chains()]
+        return [[((codecs.encode(i[0][0], 'hex_codec'), i[0][1]), i[1]) for i in j] for j in self._get_all_proofs()]
 
     def _get_whole_subtrees(self):
         """Returns an array of nodes in the tree that have balanced subtrees beneath them,
