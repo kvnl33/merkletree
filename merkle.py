@@ -190,7 +190,7 @@ class MerkleTree(object):
         self.root = new_node
 
 
-def check_chain(chain):
+def _check_proof(chain):
     """Verify a merkle chain to see if the Merkle root can be reproduced.
     """
     link = chain[0][0]
@@ -207,10 +207,10 @@ def check_chain(chain):
         raise MerkleError('The Merkle Chain is not valid.')
 
 
-def check_hex_chain(chain):
+def check_proof(chain):
     """Verify a merkle chain, with hashes hex encoded, to see if the Merkle root can be reproduced.
     """
-    return codecs.encode(check_chain([(codecs.decode(i[0][0], 'hex_codec'), i[1]) for i in chain]), 'hex_codec')
+    return codecs.encode(_check_proof([(codecs.decode(i[0][0], 'hex_codec'), i[1]) for i in chain]), 'hex_codec')
 
 
 def join_chains(low, high):

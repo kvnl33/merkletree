@@ -1,4 +1,4 @@
-from merkle import Node, MerkleTree, check_chain, check_hex_chain
+from merkle import Node, MerkleTree, _check_proof, check_proof
 from collections import OrderedDict
 import codecs, string, random
 from random import randint
@@ -57,10 +57,10 @@ def main():
 
 		e = find_nearest_above(blocks_keys, c)
 		tree = blocks[e]
+		
 		avail = [leaf.idx for leaf in tree.leaves]
-
-
 		chosen = avail.index(e)
+
 		proof = tree.get_proof(chosen)
 
 		data = tree.leaves[chosen].data
@@ -70,7 +70,7 @@ def main():
 		if hash_function(data).hexdigest() == proof[0][0][0]:
 
 			#check the Merkle proof
-			if check_hex_chain(proof) == truth[0]:
+			if check_proof(proof) == truth[0]:
 				correct += 1
 			else:
 				incorrect += 1
