@@ -20,13 +20,17 @@ class Node(object):
     and sibling (sib) node. It can also be aware of whether it is on the left or right hand side (side).
     data is hashed automatically by default, but does not have to be, if prehashed param is set to True.
     """
-    __slots__ = ['l', 'r', 'p', 'sib', 'side', 'val', 'idx']
+    __slots__ = ['l', 'r', 'p', 'sib', 'side', 'val', 'idx', 'data']
 
-    def __init__(self, data, prehashed=False):
+    def __init__(self, data, prehashed=False, isleaf=False):
         if prehashed:
             self.val = data[0]
         else:
             self.val = hash_function(data[0]).digest()
+        if isleaf:
+            self.data = data[0]
+        else:
+            self.data = None
         self.idx = data[1]
         self.l = None
         self.r = None
@@ -46,11 +50,11 @@ class MerkleTree(object):
     """
     def __init__(self, leaves=[], prehashed=False, raw_digests=False):
         if prehashed and raw_digests:
-            self.leaves = [Node(leaf, prehashed=True) for leaf in leaves]
+            self.leaves = [Node(leaf, prehashed=True, isleaf=True) for leaf in leaves]
         elif prehashed:
-            self.leaves = [Node(codecs.decode(leaf, 'hex_codec'), prehashed=True) for leaf in leaves]
+            self.leaves = [Node(codecs.decode(leaf, 'hex_codec'), prehashed=True, isleaf=True) for leaf in leaves]
         else:
-            self.leaves = [Node(leaf) for leaf in leaves]
+            self.leaves = [Node(leaf, isleaf=True) for leaf in leaves]
         self.root = None
 
     def __eq__(self, obj):
@@ -174,7 +178,7 @@ class MerkleTree(object):
         """Add a new leaf, and adjust the tree, without rebuilding the whole thing.
         """
         subtrees = self._get_whole_subtrees()
-        new_node = Node(data, prehashed=prehashed)
+        new_node = Node(data, prehashed=prehashed, isleaf=True)
         self.leaves.append(new_node)
         for node in reversed(subtrees):
             new_parent = Node( (node.val + new_node.val , max(node.idx, new_node.idx)))
