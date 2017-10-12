@@ -20,6 +20,7 @@ class Node(object):
     and sibling (sib) node. It can also be aware of whether it is on the left or right hand side (side).
     data is hashed automatically by default, but does not have to be, if prehashed param is set to True.
     """
+    # The leaf node in here can be the block, and whatever is inside are the output keys generated
     __slots__ = ['l', 'r', 'p', 'sib', 'side', 'val', 'idx', 'data']
 
     def __init__(self, data, prehashed=False, isleaf=False):
@@ -40,7 +41,6 @@ class Node(object):
 
     def __repr__(self):
         return "Val: <" + str(codecs.encode(self.val, 'hex_codec')) + ">"
-
 
 class MerkleTree(object):
     """A Merkle tree implementation.  Added values are stored in a list until the tree is built.

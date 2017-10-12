@@ -30,11 +30,18 @@ def print_tree(root):
 
 def main():
 	for i in range(0,1000,5):
+		# generate a block
+		
+
+
 		outputs = []
 		for j in range(0,5):
 			outkey = id_generator()
 			output = (outkey,i+j)
 			outputs.append(output)
+
+
+
 		newtree = MerkleTree(leaves=outputs)
 		newtree.build()
 		k = newtree.root
@@ -42,8 +49,13 @@ def main():
 		blocks[k.idx] = newtree
 		block_headers[k.idx] = root
 
-		block_headers_keys = block_headers.keys()
-		blocks_keys = blocks.keys()
+
+
+
+
+
+	block_headers_keys = block_headers.keys()
+	blocks_keys = blocks.keys()
 
 	#Run a test 100 times
 	correct = incorrect = 0
@@ -60,6 +72,12 @@ def main():
 		
 		avail = [leaf.idx for leaf in tree.leaves]
 		chosen = avail.index(e)
+
+
+
+
+
+
 
 		proof = tree.get_proof(chosen)
 
