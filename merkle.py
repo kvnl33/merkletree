@@ -23,15 +23,19 @@ class Node(object):
     # The leaf node in here can be the block, and whatever is inside are the output keys generated
     __slots__ = ['l', 'r', 'p', 'sib', 'side', 'val', 'idx', 'data']
 
-    def __init__(self, data, prehashed=False, isleaf=False):
+    def __init__(self, data, prehashed=False, isleaf=False, ):
         if prehashed:
-            self.val = data[0]
+            # this can be anything, val will be the hash
+            self.val = data 
         else:
-            self.val = hash_function(data[0]).digest()
+            self.val = hash_function(data).digest()
+
+        # if it is a leaf, we need to keep track of the data in the leaf
         if isleaf:
-            self.data = data[0]
+            self.data = data
         else:
             self.data = None
+
         self.idx = data[1]
         self.l = None
         self.r = None
