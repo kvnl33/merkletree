@@ -49,11 +49,6 @@ def main():
 		blocks[k.idx] = newtree
 		block_headers[k.idx] = root
 
-
-
-
-
-
 	block_headers_keys = block_headers.keys()
 	blocks_keys = blocks.keys()
 
@@ -72,12 +67,6 @@ def main():
 		
 		avail = [leaf.idx for leaf in tree.leaves]
 		chosen = avail.index(e)
-
-
-
-
-
-
 
 		proof = tree.get_proof(chosen)
 

@@ -26,16 +26,15 @@ class Node(object):
     def __init__(self, data, prehashed=False, isleaf=False, ):
         if prehashed:
             # this can be anything, val will be the hash
-            self.val = data 
+            self.val = data[0] 
         else:
-            self.val = hash_function(data).digest()
+            self.val = hash_function(data[0]).digest()
 
         # if it is a leaf, we need to keep track of the data in the leaf
         if isleaf:
-            self.data = data
+            self.data = data[0]
         else:
             self.data = None
-
         self.idx = data[1]
         self.l = None
         self.r = None
