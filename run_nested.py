@@ -151,7 +151,11 @@ def main():
     top_merkle = scan_over()
     # client will have access to the top_root, which it will store
     top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
+    print top_root
+    
+
     req_gidx = np.random.randint(top_root[1])+1
+    print req_gidx
 
     found_block, blk_idx = find_ge([(leaf.data,leaf.idx) for leaf in top_merkle.leaves], req_gidx)
     # write proof for block here
@@ -173,6 +177,38 @@ def main():
     out_proof = tx_merkle.get_proof(output_idx)
     if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
         print "Passed Tx check"
+
+    # add more blocks, test if add_adjust works
+    generate_blocks()
+    while testblocks:
+        scan_new_block(top_merkle, testblocks.pop(0))
+    # top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
+    print top_root
+
+    req_gidx = np.random.randint(top_root[1])+1
+    print req_gidx
+
+    found_block, blk_idx = find_ge([(leaf.data,leaf.idx) for leaf in top_merkle.leaves], req_gidx)
+    # write proof for block here
+    blk_proof = top_merkle.get_proof(blk_idx)
+    if check_proof(blk_proof) == top_root[0]:
+        print "Passed top check"
+
+    block_merkle = blocks[found_block[0]]
+    found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
+
+    # write proof for transaction over here
+    tx_proof = block_merkle.get_proof(tx_idx)
+    if check_proof(tx_proof) == block_root_hash[found_block[0]]:
+        print "Passed block Check"
+
+    tx_merkle = tx_dict[found_tx[0]]
+    found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
+
+    out_proof = tx_merkle.get_proof(output_idx)
+    if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
+        print "Passed Tx check"
+    
 
 if __name__ == '__main__':
     main()
