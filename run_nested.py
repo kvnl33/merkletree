@@ -16,7 +16,9 @@ blocks = OrderedDict()
 # client side will keep the root hashes of the transactions
 block_root_hash = OrderedDict()
 tx_root_hash = OrderedDict()
+
 top_root = None
+top_merkle = None
 
 class Block(object):
     """Each node has, as attributes, references to left (l) and right (r) child nodes, parent (p),
@@ -69,17 +71,21 @@ def find_nearest_above(my_array, target):
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
+def print_tree(m):
+    if isinstance(m, MerkleTree):
+        print_tree_helper(m.root, level=0)
+    else:
+        raise TypeError("Input must be a MerkleTree object!")
+
 #	for printing the tree
-def print_tree(root):
-	nodes = []
-	nodes.append(root)
-	while nodes:
-		ntp = nodes.pop(0)
-		if ntp.l:
-			nodes.append(ntp.l)
-		if ntp.r:
-			nodes.append(ntp.r)
-		print ntp
+def print_tree_helper(root, level=0):
+    print '\t' * level + str((codecs.encode(root.val, 'hex_codec'), root.idx))
+    children = []
+    children.extend((root.l, root.r))
+    children = [x for x in children if x is not None]
+    for child in children:
+        assert child != None
+        print_tree_helper(child, level=level+1)
 
 #	process a transaction and transform it into a Merkle tree
 #	The root of the Merkle tree will contain the greatest global index value
@@ -148,12 +154,13 @@ def scan_new_block(tm, blk):
 
 def main():
     generate_blocks()
+    global top_merkle
     top_merkle = scan_over()
     # client will have access to the top_root, which it will store
+    global top_root
     top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
     print top_root
     
-
     req_gidx = np.random.randint(top_root[1])+1
     print req_gidx
 
@@ -178,36 +185,40 @@ def main():
     if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
         print "Passed Tx check"
 
-    # add more blocks, test if add_adjust works
-    generate_blocks()
-    while testblocks:
-        scan_new_block(top_merkle, testblocks.pop(0))
+    # # add more blocks, test if add_adjust works
+    # for r in range(0,10):
+    #     generate_blocks()
+    #     while testblocks:
+    #         scan_new_block(top_merkle, testblocks.pop(0))
+
     # top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
-    print top_root
+    # print top_root
 
-    req_gidx = np.random.randint(top_root[1])+1
-    print req_gidx
+    # req_gidx = np.random.randint(top_root[1])+1
+    # print req_gidx
 
-    found_block, blk_idx = find_ge([(leaf.data,leaf.idx) for leaf in top_merkle.leaves], req_gidx)
-    # write proof for block here
-    blk_proof = top_merkle.get_proof(blk_idx)
-    if check_proof(blk_proof) == top_root[0]:
-        print "Passed top check"
+    # found_block, blk_idx = find_ge([(leaf.data,leaf.idx) for leaf in top_merkle.leaves], req_gidx)
+    # # write proof for block here
+    # blk_proof = top_merkle.get_proof(blk_idx)
+    # if check_proof(blk_proof) == top_root[0]:
+    #     print "Passed top check"
 
-    block_merkle = blocks[found_block[0]]
-    found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
+    # block_merkle = blocks[found_block[0]]
+    # found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
 
-    # write proof for transaction over here
-    tx_proof = block_merkle.get_proof(tx_idx)
-    if check_proof(tx_proof) == block_root_hash[found_block[0]]:
-        print "Passed block Check"
+    # # write proof for transaction over here
+    # tx_proof = block_merkle.get_proof(tx_idx)
+    # if check_proof(tx_proof) == block_root_hash[found_block[0]]:
+    #     print "Passed block Check"
 
-    tx_merkle = tx_dict[found_tx[0]]
-    found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
+    # tx_merkle = tx_dict[found_tx[0]]
+    # found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
 
-    out_proof = tx_merkle.get_proof(output_idx)
-    if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
-        print "Passed Tx check"
+    # out_proof = tx_merkle.get_proof(output_idx)
+    # if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
+    #     print "Passed Tx check"
+
+    print_tree(top_merkle)
     
 
 if __name__ == '__main__':
