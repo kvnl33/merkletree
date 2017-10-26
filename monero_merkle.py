@@ -45,13 +45,13 @@ def read_in_blocks():
     else:
         conn = sqlite3.connect('/home/yorozuya/rct_output_10_23_2017.db')
         c_1 = conn.cursor()
-        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 1000000''')
+        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx''')
         fetched = c_1.fetchall()
         fetched = np.asarray(fetched)
         outfile = "rct_output_10_23_2017"
         np.savez(outfile, fetched = fetched)
     global utxos
-    utxos = fetched.tolist()
+    utxos = [(item[0],item[1],item[2],int(item[3])) for item in fetched]
 
 def block_to_merkle(block_outkeys):
     block_merkle_leaves=[]
@@ -103,29 +103,30 @@ def main():
     read_in_blocks()
     scan_over_new_blocks()
 
-    req_gidx = np.random.randint(top_root[1])+1
-    print req_gidx
+    for x in range(0,10):
+        req_gidx = np.random.randint(top_root[1])+1
+        print req_gidx
 
-    found_block, blk_idx = find_ge([(leaf.data, leaf.idx) for leaf in top_merkle.leaves], req_gidx)
-    # write proof for block here
-    blk_proof = top_merkle.get_proof(blk_idx)
-    if check_proof(blk_proof) == top_root[0]:
-        print "Passed top check"
+        found_block, blk_idx = find_ge([(leaf.data, leaf.idx) for leaf in top_merkle.leaves], req_gidx)
+        # write proof for block here
+        blk_proof = top_merkle.get_proof(blk_idx)
+        if check_proof(blk_proof) == top_root[0]:
+            print "Passed top check"
 
-    block_merkle = blocks[found_block[0]]
-    found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
+        block_merkle = blocks[found_block[0]]
+        found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
 
-    # write proof for transaction over here
-    tx_proof = block_merkle.get_proof(tx_idx)
-    if check_proof(tx_proof) == block_root_hash[found_block[0]]:
-        print "Passed block Check"
+        # write proof for transaction over here
+        tx_proof = block_merkle.get_proof(tx_idx)
+        if check_proof(tx_proof) == block_root_hash[found_block[0]]:
+            print "Passed block Check"
 
-    tx_merkle = tx_dict[found_tx[0]]
-    found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
+        tx_merkle = tx_dict[found_tx[0]]
+        found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
 
-    out_proof = tx_merkle.get_proof(output_idx)
-    if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
-        print "Passed Tx check"
+        out_proof = tx_merkle.get_proof(output_idx)
+        if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
+            print "Passed Tx check"
 
     # # add more blocks, test if add_adjust works
     # for r in range(0,10):
@@ -136,7 +137,7 @@ def main():
     # top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
     # print top_root
 
-    # req_gidx = np.random.randint(top_root[1])+1
+    # req_gidx = np.random.randint(top_root[1],dtype=np.int64)+1
     # print req_gidx
 
     # found_block, blk_idx = find_ge([(leaf.data,leaf.idx) for leaf in top_merkle.leaves], req_gidx)
