@@ -4,6 +4,7 @@ import codecs, string, random, bisect, sqlite3
 import numpy as np
 from random import randint
 from hashlib import sha256
+import os.path
 
 hash_function = sha256
 
@@ -38,11 +39,19 @@ def read_in_blocks():
     '''Read in the blocks from the database containing all the RingCT outputs
     It will be in the format of a tuple
     '''
-    conn = sqlite3.connect('/home/yorozuya/rct_output_10_23_2017.db')
-    c_1 = conn.cursor()
-    c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 20''')
+    if os.path.isfile("rct_output_10_23_2017.npz"):
+        npzfile = np.load("rct_output_10_23_2017.npz")
+        fetched = npzfile["fetched"]
+    else:
+        conn = sqlite3.connect('/home/yorozuya/rct_output_10_23_2017.db')
+        c_1 = conn.cursor()
+        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 1000000''')
+        fetched = c_1.fetchall()
+        fetched = np.asarray(fetched)
+        outfile = "rct_output_10_23_2017"
+        np.savez(outfile, fetched = fetched)
     global utxos
-    utxos = c_1.fetchall()
+    utxos = fetched.tolist()
 
 def block_to_merkle(block_outkeys):
     block_merkle_leaves=[]
@@ -75,7 +84,6 @@ def tx_to_merkle(tx_outkeys):
 def scan_over_new_blocks():
     '''Scan over the utxos, distinguishing new blocks
     We will use block hash to distinguish new blocks'''
-    print utxos 
     top_merkle_leaves=[]
     while utxos:
         curr_block_hash = utxos[0][0]
@@ -95,7 +103,6 @@ def main():
     read_in_blocks()
     scan_over_new_blocks()
 
-    print top_root
     req_gidx = np.random.randint(top_root[1])+1
     print req_gidx
 
@@ -153,7 +160,7 @@ def main():
     # if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
     #     print "Passed Tx check"
 
-    print_tree(top_merkle)
+    # print_tree(top_merkle)
     
 
 if __name__ == '__main__':
