@@ -209,3 +209,19 @@ def join_chains(low, high):
     if not low[-1][0] == high[0][0]:
         raise MerkleError('The two chains do not connect.')
     return low[:-1] + high[1:]
+
+def print_tree(m):
+    if isinstance(m, MerkleTree):
+        print_tree_helper(m.root, level=0)
+    else:
+        raise TypeError("Input must be a MerkleTree object!")
+
+#   for printing the tree
+def print_tree_helper(root, level=0):
+    print '\t' * level + str((codecs.encode(root.val, 'hex_codec'), root.idx))
+    children = []
+    children.extend((root.l, root.r))
+    children = [x for x in children if x is not None]
+    for child in children:
+        assert child != None
+        print_tree_helper(child, level=level+1)
