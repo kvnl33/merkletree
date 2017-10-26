@@ -33,11 +33,15 @@ def find_ge(my_array, target):
     return my_array[i], i
 
 def find_nearest_above(my_array, target):
+    '''A linear version of the find greater or equal to
+    It is better to use find_ge instead
+    '''
 	return min(filter(lambda y: y >= target,my_array))
 
 def read_in_blocks():
     '''Read in the blocks from the database containing all the RingCT outputs
-    It will be in the format of a tuple
+    It will be in the format of a list of tuples
+    If there already exists an npz file, then don't bother reading from the database again
     '''
     if os.path.isfile("rct_output_10_23_2017.npz"):
         npzfile = np.load("rct_output_10_23_2017.npz")
@@ -54,6 +58,10 @@ def read_in_blocks():
     utxos = [(item[0],item[1],item[2],int(item[3])) for item in fetched]
 
 def block_to_merkle(block_outkeys):
+    '''Takes in the outkeys that all belong to the same block (by block hash, we can also do height)
+    and then builds a Merkle Tree. It also updates the client side block_root_hash dictionary
+    and the server side block_merkle dictionary
+    '''
     block_merkle_leaves=[]
     block_hash = block_outkeys[0][0]
     assert all(item[0] == block_hash for item in block_outkeys)
@@ -72,6 +80,9 @@ def block_to_merkle(block_outkeys):
     return (block_hash, block_merkle.root.idx)
 
 def tx_to_merkle(tx_outkeys):
+    '''Takes in the outkeys that all belong to the same transaction (by transaction hash) and builds
+    a Merkle Tree. It also updates the client side tx_root_hash dictionary and the server side
+    tx_dict dictionary'''
     tx_hash = tx_outkeys[0][1]
     assert all(item[1] == tx_hash for item in tx_outkeys)
     tx_merkle_leaves = [(item[2], item[3]) for item in tx_outkeys]
@@ -83,7 +94,8 @@ def tx_to_merkle(tx_outkeys):
 
 def scan_over_new_blocks():
     '''Scan over the utxos, distinguishing new blocks
-    We will use block hash to distinguish new blocks'''
+    We will use block hash to distinguish new blocks. The top Merkle Tree is created
+    The client side top_root will be udpated, as well as the top_merkle ADS on the server'''
     top_merkle_leaves=[]
     while utxos:
         curr_block_hash = utxos[0][0]
