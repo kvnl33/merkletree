@@ -5,6 +5,7 @@ import numpy as np
 from random import randint
 from hashlib import sha256
 import os.path
+import cPickle as pickle
 
 hash_function = sha256
 
@@ -62,6 +63,8 @@ def block_to_merkle(block_outkeys):
     and then builds a Merkle Tree. It also updates the client side block_root_hash dictionary
     and the server side block_merkle dictionary
     '''
+    # change to 
+    # for block_hash, tx_hash, outkey, idx in block_outkeys
     block_merkle_leaves=[]
     block_hash = block_outkeys[0][0]
     assert all(item[0] == block_hash for item in block_outkeys)
