@@ -37,7 +37,7 @@ def find_nearest_above(my_array, target):
     '''A linear version of the find greater or equal to
     It is better to use find_ge instead
     '''
-	return min(filter(lambda y: y >= target,my_array))
+    return min(filter(lambda y: y >= target,my_array))
 
 def read_in_blocks():
     '''Read in the blocks from the database containing all the RingCT outputs
@@ -56,7 +56,7 @@ def read_in_blocks():
         outfile = "rct_output_10_23_2017"
         np.savez(outfile, fetched = fetched)
     global utxos
-    utxos = [(item[0],item[1],item[2],int(item[3])) for item in fetched]
+    utxos = [(block_hash,tx_hash,outkey,int(idx)) for block_hash,tx_hash,outkey,idx in fetched]
 
 def block_to_merkle(block_outkeys):
     '''Takes in the outkeys that all belong to the same block (by block hash, we can also do height)
@@ -67,7 +67,8 @@ def block_to_merkle(block_outkeys):
     # for block_hash, tx_hash, outkey, idx in block_outkeys
     block_merkle_leaves=[]
     block_hash = block_outkeys[0][0]
-    assert all(item[0] == block_hash for item in block_outkeys)
+    assert all(bhash == block_hash for bhash, _, _, _ in block_outkeys)
+
     while block_outkeys:
         curr_tx_hash = block_outkeys[0][1]
         tx_outkeys = []
@@ -78,70 +79,103 @@ def block_to_merkle(block_outkeys):
         block_merkle_leaves.append(tx_to_merkle(tx_outkeys))
     block_merkle = MerkleTree(leaves=block_merkle_leaves)
     block_merkle.build()
-    blocks[block_hash] = block_merkle
-    block_root_hash[block_hash] = codecs.encode(block_merkle.root.val, 'hex_codec')
-    return (block_hash, block_merkle.root.idx)
+
+    blocks[codecs.encode(block_merkle.root.val, 'hex_codec')] = block_merkle
+    # block_root_hash[block_hash] = codecs.encode(block_merkle.root.val, 'hex_codec')
+
+    return (codecs.encode(block_merkle.root.val, 'hex_codec'), block_merkle.root.idx)
 
 def tx_to_merkle(tx_outkeys):
     '''Takes in the outkeys that all belong to the same transaction (by transaction hash) and builds
     a Merkle Tree. It also updates the client side tx_root_hash dictionary and the server side
     tx_dict dictionary'''
     tx_hash = tx_outkeys[0][1]
-    assert all(item[1] == tx_hash for item in tx_outkeys)
-    tx_merkle_leaves = [(item[2], item[3]) for item in tx_outkeys]
+    assert all(t_hash == tx_hash for _, t_hash, _, _ in tx_outkeys)
+
+    tx_merkle_leaves = [(outkey,idx) for _,_,outkey,idx in tx_outkeys]
     tx_merkle = MerkleTree(leaves=tx_merkle_leaves)
     tx_merkle.build()
-    tx_dict[tx_hash] = tx_merkle
-    tx_root_hash[tx_hash] = codecs.encode(tx_merkle.root.val, 'hex_codec')
-    return (tx_hash, tx_merkle.root.idx)
 
-def scan_over_new_blocks():
+    tx_dict[codecs.encode(tx_merkle.root.val, 'hex_codec')] = tx_merkle
+    # tx_root_hash[tx_hash] = codecs.encode(tx_merkle.root.val, 'hex_codec')
+    return (codecs.encode(tx_merkle.root.val, 'hex_codec'), tx_merkle.root.idx)
+
+def scan_over_new_blocks(new_blocks):
     '''Scan over the utxos, distinguishing new blocks
     We will use block hash to distinguish new blocks. The top Merkle Tree is created
     The client side top_root will be udpated, as well as the top_merkle ADS on the server'''
     top_merkle_leaves=[]
-    while utxos:
-        curr_block_hash = utxos[0][0]
+    while new_blocks:
+        curr_block_hash = new_blocks[0][0]
         block_outkeys = []
-        while utxos[0][0] == curr_block_hash:
-            block_outkeys.append(utxos.pop(0))
-            if not utxos:
+        while new_blocks[0][0] == curr_block_hash:
+            block_outkeys.append(new_blocks.pop(0))
+            if not new_blocks:
                 break
         top_merkle_leaves.append(block_to_merkle(block_outkeys))
     global top_merkle
     top_merkle = MerkleTree(leaves = top_merkle_leaves)
     top_merkle.build()
+
     global top_root
     top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
 
+def check_path(found_output, path_proof):
+    '''This function, which is stored and run by the client, will check the Merkle proof returned
+    by the server. The proof involves the following steps:
+        1-  The requested output key is hashed to verify it matches the first part of the outkey proof.
+        2-  The tx_merkle proof check is run.
+        3-  The root of the first Merkle is hashed to verify it matches the first part of the tx proof.
+        4-  The blk_merkle proof check is run.
+        5-  The root of the second Merkle is hashed to verify it matches the first part of the blk proof.
+        6-  The top_merkle proof is run.
+        7-  Finally, the last part of the proof, which should contain the top merkle root, is verified.
+    If all steps pass, then we have successfully checked that our query was returned correctly.
+    If any of the checks fail, then the query was not returned correctly, and we need to run the verifier.'''
+    outproof, txproof, blkproof = path_proof
+    leaf_hashed, _ = outproof[0]
+    if (hash_function(found_output[0]).hexdigest(),found_output[1]) == leaf_hashed:
+        if check_proof(outproof):
+            tx_hashed, _ = txproof[0]
+            outproof_merkle_root, _ = outproof[-1]
+            if (hash_function(outproof_merkle_root[0]).hexdigest(),outproof_merkle_root[1])==tx_hashed:
+                if check_proof(txproof):
+                    blk_hashed, _ = blkproof[0]
+                    txproof_merkle_root, _ = txproof[-1]
+                    if (hash_function(txproof_merkle_root[0]).hexdigest(), txproof_merkle_root[1]) == blk_hashed:
+                        if check_proof(blkproof):
+                            blkproof_merkle_root,_ = blkproof[-1]
+                            if blkproof_merkle_root == top_root:
+                                return True
+    return False
+
 def main():
     read_in_blocks()
-    scan_over_new_blocks()
+    scan_over_new_blocks(utxos)
 
-    for x in range(0,10):
+    for x in range(0,50):
         req_gidx = np.random.randint(top_root[1])+1
         print req_gidx
 
         found_block, blk_idx = find_ge([(leaf.data, leaf.idx) for leaf in top_merkle.leaves], req_gidx)
         # write proof for block here
         blk_proof = top_merkle.get_proof(blk_idx)
-        if check_proof(blk_proof) == top_root[0]:
-            print "Passed top check"
-
         block_merkle = blocks[found_block[0]]
-        found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
 
+        found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
         # write proof for transaction over here
         tx_proof = block_merkle.get_proof(tx_idx)
-        if check_proof(tx_proof) == block_root_hash[found_block[0]]:
-            print "Passed block Check"
-
         tx_merkle = tx_dict[found_tx[0]]
-        found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
 
+        found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
         out_proof = tx_merkle.get_proof(output_idx)
-        if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
-            print "Passed Tx check"
+
+        path_proof = (out_proof,tx_proof,blk_proof)
+
+        if check_path(found_output, path_proof):
+            print "Proof at run {} is valid.".format(x)
+        else:
+            print "Proof at run {} is incorrect.".format(x)
 
     # # add more blocks, test if add_adjust works
     # for r in range(0,10):
