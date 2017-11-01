@@ -13,6 +13,7 @@ utxos = []
 
 tx_dict = OrderedDict()
 blocks = OrderedDict()
+merkle_forest = OrderedDict()
 
 # client side will keep the root hashes of the transactions
 block_root_hash = OrderedDict()
@@ -80,7 +81,7 @@ def block_to_merkle(block_outkeys):
     block_merkle = MerkleTree(leaves=block_merkle_leaves)
     block_merkle.build()
 
-    blocks[codecs.encode(block_merkle.root.val, 'hex_codec')] = block_merkle
+    merkle_forest[codecs.encode(block_merkle.root.val, 'hex_codec')] = block_merkle
     # block_root_hash[block_hash] = codecs.encode(block_merkle.root.val, 'hex_codec')
 
     return (codecs.encode(block_merkle.root.val, 'hex_codec'), block_merkle.root.idx)
@@ -96,7 +97,7 @@ def tx_to_merkle(tx_outkeys):
     tx_merkle = MerkleTree(leaves=tx_merkle_leaves)
     tx_merkle.build()
 
-    tx_dict[codecs.encode(tx_merkle.root.val, 'hex_codec')] = tx_merkle
+    merkle_forest[codecs.encode(tx_merkle.root.val, 'hex_codec')] = tx_merkle
     # tx_root_hash[tx_hash] = codecs.encode(tx_merkle.root.val, 'hex_codec')
     return (codecs.encode(tx_merkle.root.val, 'hex_codec'), tx_merkle.root.idx)
 
@@ -119,6 +120,8 @@ def scan_over_new_blocks(new_blocks):
 
     global top_root
     top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
+    
+    merkle_forest[codecs.encode(top_merkle.root.val, 'hex_codec')] = top_merkle
 
 def check_path(found_output, path_proof):
     '''This function, which is stored and run by the client, will check the Merkle proof returned
@@ -160,12 +163,12 @@ def main():
         found_block, blk_idx = find_ge([(leaf.data, leaf.idx) for leaf in top_merkle.leaves], req_gidx)
         # write proof for block here
         blk_proof = top_merkle.get_proof(blk_idx)
-        block_merkle = blocks[found_block[0]]
+        block_merkle = merkle_forest[found_block[0]]
 
         found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
         # write proof for transaction over here
         tx_proof = block_merkle.get_proof(tx_idx)
-        tx_merkle = tx_dict[found_tx[0]]
+        tx_merkle = merkle_forest[found_tx[0]]
 
         found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
         out_proof = tx_merkle.get_proof(output_idx)

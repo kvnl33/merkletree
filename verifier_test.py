@@ -5,25 +5,49 @@ from random import randint
 from hashlib import sha256
 import os.path
 import cPickle as pickle
+from collections import OrderedDict
 
 t1=t2=t1_root=t2_root = None
+merkle_forest = OrderedDict()
 
-def block_verifier(server1, server2):
+def block_verifier(m1, m2):
 	'''Searches for the block that is different in two servers'''
-	block_level=False
 	search = []
-	while not block_level:
-		l1, r1=server1.fetch_children_hash(path=search[:])
-		l2, r2=server2.fetch_children_hash(path=search[:])
-		if l1==l2==r1==r2==None:
-			block_level=True
+	while True:
+		(lhash_1, rhash_1, ldata_1, rdata_1) = fetch_children_hash(path=search[:])
+		(lhash_2, rhash_2, ldata_2, rdata_2) = fetch_children_hash(path=search[:])
+		if ldata_1 or rdata_1:
 			break
-		if l1 == l2:
+		if lhash1 == lhash_2:
 			search.append('r')
 		else:
 			search.append('l')
-		print search
-	
+	if ldata_1==ldata_2:
+		block_root_1 = rdata_1
+		block_root_2 = rdata_2
+	else:
+		block_root_1 = ldata_1
+		block_root_2 = ldata_2
+
+	# empty the list to do a search for the transaction-level now
+	search[:] = []
+	while True:
+		(lhash_1, rhash_1, ldata_1, rdata_1) = fetch_children_hash(forest[block_root_1], path=search[:])
+		(lhash_2, rhash_2, ldata_2, rdata_2) = fetch_children_hash(forest[block_root_2], path=search[:])
+		if ldata_1 or rdata_1:
+			break
+		if lhash1 == lhash_2:
+			search.append('r')
+		else:
+			search.append('l')
+	if ldata_1==ldata_2:
+		tx_root_1 = rdata_1
+		tx_root_2 = rdata_2
+	else:
+		tx_root_1 = ldata_1
+		tx_root_2 = ldata_2
+
+
 
 def setup():
 	leaf1 = [('5L6MXERSD1', 12),
@@ -91,13 +115,17 @@ def setup():
 	global t1, t2
 	t1 = MerkleTree(leaves=leaf1)
 	t1.build()
-	t1_root = ()
 	t2 = MerkleTree(leaves=leaf2)
 	t2.build()
+	merkle_forest[codecs.encode(t1.root.val, 'hex_codec')] = t1
+	merkle_forest[codecs.encode(t2.root.val, 'hex_codec')] = t2
+	global t1_root, t2_root
+	t1_root = (codecs.encode(t1.root.val, 'hex_codec'), t1.root.idx)
+	t2_root = (codecs.encode(t2.root.val, 'hex_codec'), t2.root.idx)
 
 def main():
 	setup()
-	block_verifier(t1,t2)
+	block_verifier(t1_root, t2_root)
 
 if __name__ == '__main__':
     main()

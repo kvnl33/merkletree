@@ -177,27 +177,6 @@ class MerkleTree(object):
             new_node = new_node.p
         self.root = new_node
 
-    def fetch_children_hash(self, path=[]):
-        """When a client makes a call, we will return the hashes of the left and right children of
-        the tree, following the path provided. If none provided, just return the two subtree nodes
-        of the top of the tree"""
-        the_node = self.root
-        for direction in path:
-            assert direction in ['l','r']
-            left_child = the_node.l
-            right_child = the_node.r
-            if left_child==right_child==None:
-                break
-            if direction == 'l':
-                the_node = left_child
-            else:
-                the_node = right_child
-        lc = the_node.l
-        rc = the_node.r
-        lhash = codecs.encode(lc.val, 'hex_codec') if lc else None
-        rhash = codecs.encode(rc.val, 'hex_codec') if rc else None
-        return lhash, rhash
-
 def _check_proof(chain):
     """Verify a merkle chain to see if the Merkle root can be reproduced.
     """
@@ -245,3 +224,41 @@ def print_tree_helper(root, level=0):
     for child in children:
         assert child != None
         print_tree_helper(child, level=level+1)
+
+def get_num_leaves(m):
+    if isinstance(m, MerkleTree):
+        return len(m.leaves)
+    else:
+        raise TypeError("Input must be a MerkleTree object!")
+
+
+def fetch_children_hash(m, path=[]):
+    """When a client makes a call, we will return the hashes of the left and right children of
+    the tree, following the path provided. If none provided, just return the two subtree nodes
+    of the top of the tree"""
+    the_node = m.root
+    for direction in path:
+        assert direction in ['l','r']
+        left_child = the_node.l
+        right_child = the_node.r
+        if left_child == right_child == None:
+            break
+        if direction == 'l':
+            the_node = left_child
+        else:
+            the_node = right_child
+    lc = the_node.l
+    rc = the_node.r
+    if lc:
+        lhash = codecs.encode(lc.val, 'hex_codec')
+        ldata = lc.data if lc.data else None
+    else:
+        lhash = None
+        ldata = None
+    if rc:
+        rhash = codecs.encode(rc.val, 'hex_codec')
+        rdata = rc.data if rc.data else None
+    else:
+        rhash = None
+        rdata = None
+    return (lhash, rhash, ldata, rdata) 
