@@ -17,18 +17,34 @@ def block_verifier(m1, m2):
 	while True:
 		(lhash_1, rhash_1, ldata_1, rdata_1) = fetch_children_hash(merkle_forest1[m1], path=search[:])
 		(lhash_2, rhash_2, ldata_2, rdata_2) = fetch_children_hash(merkle_forest2[m2], path=search[:])
+		# we have reached leaf level
 		if ldata_1 and rdata_1:
 			break
+		# we have reached a leaf on one side and not the other
+		elif ldata_1 and not rdata_1:
+			if lhash_1 != lhash_2:
+				break
+		elif not ldata_1 and rdata_1:
+			if rhash_1 != rhash_2:
+				break
 		if lhash_1 == lhash_2:
 			search.append('r')
 		else:
 			search.append('l')
-	if ldata_1 == ldata_2:
+
+	if ldata_1 and not rdata_1:
+		block_root_1 = ldata_1
+		block_root_2 = ldata_2
+	elif not ldata_1 and rdata_1:
 		block_root_1 = rdata_1
 		block_root_2 = rdata_2
 	else:
-		block_root_1 = ldata_1
-		block_root_2 = ldata_2
+		if ldata_1 == ldata_2:
+			block_root_1 = rdata_1
+			block_root_2 = rdata_2
+		else:
+			block_root_1 = ldata_1
+			block_root_2 = ldata_2
 
 	print block_root_1
 	print block_root_2
@@ -40,17 +56,30 @@ def block_verifier(m1, m2):
 		(lhash_2, rhash_2, ldata_2, rdata_2) = fetch_children_hash(merkle_forest2[block_root_2], path=search[:])
 		if ldata_1 and rdata_1:
 			break
+		# we have reached a leaf on one side and not the other
+		elif ldata_1 and not rdata_1:
+			if lhash_1 != lhash_2:
+				break
+		elif not ldata_1 and rdata_1:
+			if rhash_1 != rhash_2:
+				break
 		if lhash_1 == lhash_2:
 			search.append('r')
 		else:
 			search.append('l')
-
-	if ldata_1 == ldata_2:
+	if ldata_1 and not rdata_1:
+		tx_root_1 = ldata_1
+		tx_root_2 = ldata_2
+	elif not ldata_1 and rdata_1:
 		tx_root_1 = rdata_1
 		tx_root_2 = rdata_2
 	else:
-		tx_root_1 = ldata_1
-		tx_root_2 = ldata_2
+		if ldata_1 == ldata_2:
+			tx_root_1 = rdata_1
+			tx_root_2 = rdata_2
+		else:
+			tx_root_1 = ldata_1
+			tx_root_2 = ldata_2
 
 	print tx_root_1
 	print tx_root_2
