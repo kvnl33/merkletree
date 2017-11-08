@@ -55,6 +55,7 @@ def block_verifier(m1, m2):
 
 	# empty the list to do a search for the transaction-level now
 	search[:] = []
+	while True:
 		r1 = requests.get(server1+"/getchildren", json={"root":block_root_1, "path":search[:]})
 		r2 = requests.get(server2+"/getchildren", json={"root":block_root_2, "path":search[:]})
 		r1 = r1.json()
