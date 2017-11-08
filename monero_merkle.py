@@ -1,3 +1,4 @@
+'''This file is used to set up the Merkle Tree on the server side'''
 from merkle import Node, MerkleTree, _check_proof, check_proof, print_tree, fetch_children_hash, get_num_leaves
 from collections import OrderedDict
 import codecs, string, random, bisect, sqlite3
@@ -41,21 +42,21 @@ def find_nearest_above(my_array, target):
     '''
     return min(filter(lambda y: y >= target,my_array))
 
-def read_in_blocks():
+def read_in_blocks(database_name):
     '''Read in the blocks from the database containing all the RingCT outputs
     It will be in the format of a list of tuples
     If there already exists an npz file, then don't bother reading from the database again
     '''
-    if os.path.isfile("/data/rct_output_10_23_2017.npz"):
-        npzfile = np.load("/data/rct_output_10_23_2017.npz")
+    if os.path.isfile("/data/"+database_name+".npz"):
+        npzfile = np.load("/data/"+database_name+".npz")
         fetched = npzfile["fetched"]
     else:
-        conn = sqlite3.connect('/data/rct_output_10_23_2017.db')
+        conn = sqlite3.connect("/data/"+database_name+".db")
         c_1 = conn.cursor()
         c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 20''')
         fetched = c_1.fetchall()
         fetched = np.asarray(fetched)
-        outfile = "/data/rct_output_10_23_2017"
+        outfile = "/data/"+database_name
         np.savez(outfile, fetched = fetched)
         conn.close()
     global utxos
@@ -122,7 +123,6 @@ def scan_over_new_blocks(new_blocks):
 
     global top_root
     top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
-    
     merkle_forest[codecs.encode(top_merkle.root.val, 'hex_codec')] = top_merkle
 
 def check_path(found_output, path_proof):
@@ -155,8 +155,9 @@ def check_path(found_output, path_proof):
     return False
 
 def main():
-    read_in_blocks()
+    read_in_blocks("rct_output_10_23_2017")
     scan_over_new_blocks(utxos)
+    read_in_blocks("rct_output_11_05_2017")
 
     # for x in range(0,50):
     #     req_gidx = np.random.randint(top_root[1])+1
@@ -253,6 +254,24 @@ def getchildren():
     path = t["path"]
     data = fetch_children_hash(merkle_forest[root], path=path)
     return jsonify({"data": data})
+
+@app.route("/update", methods = ["POST"])
+def update_merkle():
+    if utxos:
+        del merkle_forest[top_root[0]]
+        curr_block_hash = utxos[0][0]
+        block_outkeys = []
+        while utxos[0][0] == curr_block_hash:
+            block_outkeys.append(utxos.pop(0))
+            if not utxos:
+                break
+        top_merkle.add_adjust(block_to_merkle(block_outkeys))
+        global top_root
+        top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
+        merkle_forest[codecs.encode(top_merkle.root.val, 'hex_codec')] = top_merkle
+        return getroot()
+    else:
+        return jsonify({"Failure": 0})
 
 if __name__ == '__main__':
     main()
