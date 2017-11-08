@@ -1,12 +1,12 @@
 '''This file is used to set up the Merkle Tree on the server side'''
+from merkle import Node, MerkleTree, _check_proof, check_proof, print_tree, fetch_children_hash, get_num_leaves
 from collections import OrderedDict
-import codecs, string, random, bisect, sqlite3
-import numpy as np
 from random import randint
 from hashlib import sha256
-import os.path
-import cPickle as pickle
 from flask import Flask, request, jsonify
+import codecs, string, random, bisect, sqlite3, os.path
+import numpy as np
+import cPickle as pickle
 app = Flask(__name__)
 
 hash_function = sha256
