@@ -247,7 +247,7 @@ def getoutput():
 def getchildren():
     t = request.get_json()
     if "root" in t.keys():
-        root = t["root"][0]
+        root = t["root"]
     else:
         root = top_root[0]
     path = t["path"]

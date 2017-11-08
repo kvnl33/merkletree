@@ -15,8 +15,8 @@ def block_verifier(m1, m2):
 	'''Searches for the block that is different in two servers'''
 	search = []
 	while True:
-		r1 = requests.get(server1+"/getchildren", json={"root":m1, "path":search[:]})
-		r2 = requests.get(server2+"/getchildren", json={"root":m2, "path":search[:]})
+		r1 = requests.get(server1+"/getchildren", json={"root":m1[0], "path":search[:]})
+		r2 = requests.get(server2+"/getchildren", json={"root":m2[0], "path":search[:]})
 		r1 = r1.json()
 		r2 = r2.json()
 		(lhash_1, rhash_1, ldata_1, rdata_1) = tuple(r1["data"])
