@@ -46,17 +46,18 @@ def read_in_blocks():
     It will be in the format of a list of tuples
     If there already exists an npz file, then don't bother reading from the database again
     '''
-    if os.path.isfile("rct_output_10_23_2017.npz"):
-        npzfile = np.load("rct_output_10_23_2017.npz")
+    if os.path.isfile("/data/rct_output_10_23_2017.npz"):
+        npzfile = np.load("/data/rct_output_10_23_2017.npz")
         fetched = npzfile["fetched"]
     else:
-        conn = sqlite3.connect('/home/yorozuya/rct_output_10_23_2017.db')
+        conn = sqlite3.connect('/data/rct_output_10_23_2017.db')
         c_1 = conn.cursor()
         c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 20''')
         fetched = c_1.fetchall()
         fetched = np.asarray(fetched)
-        outfile = "rct_output_10_23_2017"
+        outfile = "/data/rct_output_10_23_2017"
         np.savez(outfile, fetched = fetched)
+        conn.close()
     global utxos
     utxos = [(block_hash,tx_hash,outkey,int(idx)) for block_hash,tx_hash,outkey,idx in fetched]
 
