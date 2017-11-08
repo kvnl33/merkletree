@@ -1,5 +1,4 @@
 '''This file is used to set up the Merkle Tree on the server side'''
-from merkle import Node, MerkleTree, _check_proof, check_proof, print_tree, fetch_children_hash, get_num_leaves
 from collections import OrderedDict
 import codecs, string, random, bisect, sqlite3
 import numpy as np
@@ -254,6 +253,16 @@ def getchildren():
     path = t["path"]
     data = fetch_children_hash(merkle_forest[root], path=path)
     return jsonify({"data": data})
+
+@app.route("/getnumleaves", methods = ["GET"])
+def getchildren():
+    t = request.get_json()
+    root = t["root"][0]
+    if root in merkle_forest.keys():
+        data = get_num_leaves(merkle_forest[root])
+        return jsonify({"data": data})
+    else:
+        return jsonify({"Failure": 0})
 
 @app.route("/update", methods = ["POST"])
 def update_merkle():
