@@ -255,7 +255,7 @@ def getchildren():
     return jsonify({"data": data})
 
 @app.route("/getnumleaves", methods = ["GET"])
-def getchildren():
+def getleaves():
     t = request.get_json()
     root = t["root"][0]
     if root in merkle_forest.keys():
