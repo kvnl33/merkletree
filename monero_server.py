@@ -6,14 +6,12 @@ from hashlib import sha256
 from flask import Flask, request, jsonify
 import codecs, string, random, bisect, sqlite3, os.path
 import numpy as np
-import cPickle as pickle
+# import cPickle as pickle
 app = Flask(__name__)
 
 hash_function = sha256
 utxos = []
 
-tx_dict = OrderedDict()
-blocks = OrderedDict()
 merkle_forest = OrderedDict()
 
 # client side will keep the root hashes of the transactions
@@ -52,7 +50,7 @@ def read_in_blocks(database_name):
     else:
         conn = sqlite3.connect("/data/"+database_name+".db")
         c_1 = conn.cursor()
-        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 20''')
+        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx''')
         fetched = c_1.fetchall()
         fetched = np.asarray(fetched)
         outfile = "/data/"+database_name
