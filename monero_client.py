@@ -106,18 +106,19 @@ def check_path(found_output, path_proof, top_root):
     outproof, txproof, blkproof = path_proof
     leaf_hashed, _ = outproof[0]
     if [hash_function(found_output[0]).hexdigest(),found_output[1]] == leaf_hashed:
-        if check_proof(outproof):
-            tx_hashed, _ = txproof[0]
-            outproof_merkle_root, _ = outproof[-1]
-            if [hash_function(outproof_merkle_root[0]).hexdigest(),outproof_merkle_root[1]]==tx_hashed:
-                if check_proof(txproof):
-                    blk_hashed, _ = blkproof[0]
-                    txproof_merkle_root, _ = txproof[-1]
-                    if [hash_function(txproof_merkle_root[0]).hexdigest(), txproof_merkle_root[1]] == blk_hashed:
-                        if check_proof(blkproof):
-                            blkproof_merkle_root,_ = blkproof[-1]
-                            if blkproof_merkle_root == [top_root]:
-                                return True
+    	if check_proof(outproof):
+    		tx_hashed, _ = txproof[0]
+    		outproof_merkle_root, _ = outproof[-1]
+    		if [hash_function(outproof_merkle_root[0]).hexdigest(),outproof_merkle_root[1]]==tx_hashed:
+    			if check_proof(txproof):
+    				blk_hashed, _ = blkproof[0]
+    				txproof_merkle_root, _ = txproof[-1]
+    				if [hash_function(txproof_merkle_root[0]).hexdigest(), txproof_merkle_root[1]] == blk_hashed:
+    					if check_proof(blkproof):
+    						blkproof_merkle_root,_ = blkproof[-1]
+    						print blkproof_merkle_root
+    						if blkproof_merkle_root == list(top_root):
+    							return True
     return False
 
 def setup():
