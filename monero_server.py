@@ -5,7 +5,7 @@ from random import randint
 from hashlib import sha256
 from flask import Flask, request, jsonify
 import codecs, string, random, bisect, sqlite3, os.path
-import numpy as np
+# import numpy as np
 # import cPickle as pickle
 app = Flask(__name__)
 
@@ -44,20 +44,27 @@ def read_in_blocks(database_name):
     It will be in the format of a list of tuples
     If there already exists an npz file, then don't bother reading from the database again
     '''
-    if os.path.isfile("/data/"+database_name+".npz"):
-        npzfile = np.load("/data/"+database_name+".npz")
-        fetched = npzfile["fetched"]
-    else:
-        conn = sqlite3.connect("/data/"+database_name+".db")
-        c_1 = conn.cursor()
-        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx''')
-        fetched = c_1.fetchall()
-        fetched = np.asarray(fetched)
-        outfile = "/data/"+database_name
-        np.savez(outfile, fetched = fetched)
-        conn.close()
+    # if os.path.isfile("/data/"+database_name+".npz"):
+    #     npzfile = np.load("/data/"+database_name+".npz")
+    #     fetched = npzfile["fetched"]
+    # else:
+    #     conn = sqlite3.connect("/data/"+database_name+".db")
+    #     c_1 = conn.cursor()
+    #     c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx''')
+    #     fetched = c_1.fetchall()
+    #     fetched = np.asarray(fetched)
+    #     outfile = "/data/"+database_name
+    #     np.savez(outfile, fetched = fetched)
+    #     conn.close()
+    # global utxos
+    # utxos = [(block_hash,tx_hash,outkey,int(idx)) for block_hash,tx_hash,outkey,idx in fetched]
+
+    conn = sqlite3.connect("/data/"+database_name+".db")
+    c_1 = conn.cursor()
+    c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx''')
     global utxos
-    utxos = [(block_hash,tx_hash,outkey,int(idx)) for block_hash,tx_hash,outkey,idx in fetched]
+    utxos = c_1.fetchall()
+    conn.close()
 
 def block_to_merkle(block_outkeys):
     '''Takes in the outkeys that all belong to the same block (by block hash, we can also do height)
