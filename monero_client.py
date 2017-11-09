@@ -121,6 +121,21 @@ def check_path(found_output, path_proof, top_root):
     							return True
     return False
 
+
+def get_output(top_root, idx):
+	assert top_root in [t1_root, t2_root]
+	if idx <= top_root[1] and idx >= 0:
+		if top_root == t1_root:
+			r = requests.get(server1+"/getout", json={"idx":idx})
+		else:
+			r = requests.get(server2+"/getout", json={"idx":idx})
+		r = r.json()
+		found_output = r["found"]
+		found_proof = r["proof"]
+		return found_output, found_proof
+	else:
+		raise ValueError("Server has not reached that global index yet")
+
 def setup():
 	global t1_root, t2_root
 	r1 = requests.get(server1+"/getroot")
