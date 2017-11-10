@@ -88,9 +88,7 @@ def block_to_merkle(block_outkeys):
     block_merkle = MerkleTree(leaves=block_merkle_leaves)
     block_merkle.build()
 
-    merkle_forest[codecs.encode(block_merkle.root.val, 'hex_codec')] = block_merkle
-    # block_root_hash[block_hash] = codecs.encode(block_merkle.root.val, 'hex_codec')
-
+    # merkle_forest[codecs.encode(block_merkle.root.val, 'hex_codec')] = block_merkle
     return (codecs.encode(block_merkle.root.val, 'hex_codec'), block_merkle.root.idx)
 
 def tx_to_merkle(tx_outkeys):
@@ -104,8 +102,7 @@ def tx_to_merkle(tx_outkeys):
     tx_merkle = MerkleTree(leaves=tx_merkle_leaves)
     tx_merkle.build()
 
-    merkle_forest[codecs.encode(tx_merkle.root.val, 'hex_codec')] = tx_merkle
-    # tx_root_hash[tx_hash] = codecs.encode(tx_merkle.root.val, 'hex_codec')
+    # merkle_forest[codecs.encode(tx_merkle.root.val, 'hex_codec')] = tx_merkle
     return (codecs.encode(tx_merkle.root.val, 'hex_codec'), tx_merkle.root.idx)
 
 def scan_over_new_blocks(new_blocks):
@@ -127,7 +124,7 @@ def scan_over_new_blocks(new_blocks):
 
     global top_root
     top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
-    merkle_forest[codecs.encode(top_merkle.root.val, 'hex_codec')] = top_merkle
+    # merkle_forest[codecs.encode(top_merkle.root.val, 'hex_codec')] = top_merkle
 
 def check_path(found_output, path_proof):
     '''This function, which is stored and run by the client, will check the Merkle proof returned
@@ -251,7 +248,7 @@ def getoutput():
 @app.route("/getchildren", methods = ["GET"])
 def getchildren():
     t = request.get_json()
-    if "root" in t.keys():
+    if "root" in t:
         root = t["root"]
     else:
         root = top_root[0]
@@ -263,7 +260,7 @@ def getchildren():
 def getleaves():
     t = request.get_json()
     root = t["root"][0]
-    if root in merkle_forest.keys():
+    if root in merkle_forest:
         data = get_num_leaves(merkle_forest[root])
         return jsonify({"data": data})
     else:
