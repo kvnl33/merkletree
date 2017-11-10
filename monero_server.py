@@ -1,10 +1,9 @@
 '''This file is used to set up the Merkle Tree on the server side'''
 from merkle import Node, MerkleTree, _check_proof, check_proof, print_tree, fetch_children_hash, get_num_leaves
-from collections import OrderedDict
-from random import randint
 from hashlib import sha256
 from flask import Flask, request, jsonify
 import codecs, string, random, bisect, sqlite3, os.path
+import shelve
 # import numpy as np
 # import cPickle as pickle
 app = Flask(__name__)
@@ -12,11 +11,7 @@ app = Flask(__name__)
 hash_function = sha256
 utxos = []
 
-merkle_forest = OrderedDict()
-
-# client side will keep the root hashes of the transactions
-block_root_hash = OrderedDict()
-tx_root_hash = OrderedDict()
+merkle_forest = shelve.open("/data/merkle_forest")
 
 top_root = None
 top_merkle = None
@@ -88,7 +83,7 @@ def block_to_merkle(block_outkeys):
     block_merkle = MerkleTree(leaves=block_merkle_leaves)
     block_merkle.build()
 
-    # merkle_forest[codecs.encode(block_merkle.root.val, 'hex_codec')] = block_merkle
+    merkle_forest[codecs.encode(block_merkle.root.val, 'hex_codec')] = block_merkle
     return (codecs.encode(block_merkle.root.val, 'hex_codec'), block_merkle.root.idx)
 
 def tx_to_merkle(tx_outkeys):
@@ -102,7 +97,7 @@ def tx_to_merkle(tx_outkeys):
     tx_merkle = MerkleTree(leaves=tx_merkle_leaves)
     tx_merkle.build()
 
-    # merkle_forest[codecs.encode(tx_merkle.root.val, 'hex_codec')] = tx_merkle
+    merkle_forest[codecs.encode(tx_merkle.root.val, 'hex_codec')] = tx_merkle
     return (codecs.encode(tx_merkle.root.val, 'hex_codec'), tx_merkle.root.idx)
 
 def scan_over_new_blocks(new_blocks):
@@ -124,7 +119,8 @@ def scan_over_new_blocks(new_blocks):
 
     global top_root
     top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
-    # merkle_forest[codecs.encode(top_merkle.root.val, 'hex_codec')] = top_merkle
+    merkle_forest[codecs.encode(top_merkle.root.val, 'hex_codec')] = top_merkle
+    # merkle_forest.close()
 
 def check_path(found_output, path_proof):
     '''This function, which is stored and run by the client, will check the Merkle proof returned
