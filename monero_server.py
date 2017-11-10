@@ -11,7 +11,7 @@ app = Flask(__name__)
 hash_function = sha256
 utxos = []
 
-merkle_forest = shelve.open("/data/merkle_forest")
+merkle_forest = shelve.open("/data/merkle_forest", protocol=-1)
 
 top_root = None
 top_merkle = None
