@@ -116,7 +116,6 @@ def check_path(found_output, path_proof, top_root):
     				if [hash_function(txproof_merkle_root[0]).hexdigest(), txproof_merkle_root[1]] == blk_hashed:
     					if check_proof(blkproof):
     						blkproof_merkle_root,_ = blkproof[-1]
-    						print blkproof_merkle_root
     						if blkproof_merkle_root == list(top_root):
     							return True
     return False
