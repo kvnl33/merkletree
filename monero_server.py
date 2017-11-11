@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 import codecs, string, random, bisect, sqlite3, os.path
 import shelve
 # import numpy as np
-# import cPickle as pickle
+import cPickle as pickle
 app = Flask(__name__)
 
 hash_function = sha256
@@ -37,30 +37,20 @@ def find_nearest_above(my_array, target):
 def read_in_blocks(database_name):
     '''Read in the blocks from the database containing all the RingCT outputs
     It will be in the format of a list of tuples
-    If there already exists an npz file, then don't bother reading from the database again
+    If there already exists an pickle file, then don't bother reading from the database again
     '''
-    # if os.path.isfile("/data/"+database_name+".npz"):
-    #     npzfile = np.load("/data/"+database_name+".npz")
-    #     fetched = npzfile["fetched"]
-    # else:
-    #     conn = sqlite3.connect("/data/"+database_name+".db")
-    #     c_1 = conn.cursor()
-    #     c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx''')
-    #     fetched = c_1.fetchall()
-    #     fetched = np.asarray(fetched)
-    #     outfile = "/data/"+database_name
-    #     np.savez(outfile, fetched = fetched)
-    #     conn.close()
-    # global utxos
-    # utxos = [(block_hash,tx_hash,outkey,int(idx)) for block_hash,tx_hash,outkey,idx in fetched]
-
-    conn = sqlite3.connect("/data/"+database_name+".db")
-    c_1 = conn.cursor()
-    c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx''')
+    if os.path.isfile("/data/"+database_name+".p"):
+        fetched = pickle.load(open("/data/"+database_name+".p","rb"))
+    else:
+        conn = sqlite3.connect("/data/"+database_name+".db")
+        c_1 = conn.cursor()
+        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 20''')
+        fetched = c_1.fetchall()
+        pickle.dump(fetched, open("/data/"+database_name+".p", "wb" ))
+        conn.close()
     global utxos
-    utxos = c_1.fetchall()
-    conn.close()
-
+    utxos = fetched
+    
 def block_to_merkle(block_outkeys):
     '''Takes in the outkeys that all belong to the same block (by block hash, we can also do height)
     and then builds a Merkle Tree. It also updates the client side block_root_hash dictionary
@@ -155,65 +145,6 @@ def main():
     read_in_blocks("rct_output_10_23_2017")
     scan_over_new_blocks(utxos)
     read_in_blocks("rct_output_11_05_2017")
-
-    # for x in range(0,50):
-    #     req_gidx = np.random.randint(top_root[1])+1
-    #     print req_gidx
-
-    #     found_block, blk_idx = find_ge([(leaf.data, leaf.idx) for leaf in top_merkle.leaves], req_gidx)
-    #     # write proof for block here
-    #     blk_proof = top_merkle.get_proof(blk_idx)
-    #     block_merkle = merkle_forest[found_block[0]]
-
-    #     found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
-    #     # write proof for transaction over here
-    #     tx_proof = block_merkle.get_proof(tx_idx)
-    #     tx_merkle = merkle_forest[found_tx[0]]
-
-    #     found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
-    #     out_proof = tx_merkle.get_proof(output_idx)
-
-    #     path_proof = (out_proof,tx_proof,blk_proof)
-
-        # if check_path(found_output, path_proof):
-        #     print "Proof at run {} is valid.".format(x)
-        # else:
-        #     print "Proof at run {} is incorrect.".format(x)
-
-    # # add more blocks, test if add_adjust works
-    # for r in range(0,10):
-    #     generate_blocks()
-    #     while testblocks:
-    #         scan_new_block(top_merkle, testblocks.pop(0))
-
-    # top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
-    # print top_root
-
-    # req_gidx = np.random.randint(top_root[1],dtype=np.int64)+1
-    # print req_gidx
-
-    # found_block, blk_idx = find_ge([(leaf.data,leaf.idx) for leaf in top_merkle.leaves], req_gidx)
-    # # write proof for block here
-    # blk_proof = top_merkle.get_proof(blk_idx)
-    # if check_proof(blk_proof) == top_root[0]:
-    #     print "Passed top check"
-
-    # block_merkle = blocks[found_block[0]]
-    # found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
-
-    # # write proof for transaction over here
-    # tx_proof = block_merkle.get_proof(tx_idx)
-    # if check_proof(tx_proof) == block_root_hash[found_block[0]]:
-    #     print "Passed block Check"
-
-    # tx_merkle = tx_dict[found_tx[0]]
-    # found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
-
-    # out_proof = tx_merkle.get_proof(output_idx)
-    # if check_proof(out_proof) == tx_root_hash[found_tx[0]]:
-    #     print "Passed Tx check"
-
-    # print_tree(top_merkle)
     
 @app.route("/getroot", methods = ["GET"])
 def getroot():
