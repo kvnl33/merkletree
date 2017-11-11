@@ -42,7 +42,7 @@ def read_in_blocks(database_name):
     else:
         conn = sqlite3.connect("/data/"+database_name+".db")
         c_1 = conn.cursor()
-        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 20''')
+        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 1007''')
         fetched = c_1.fetchall()
         pickle.dump(fetched, open("/data/"+database_name+".p", "wb" ))
         conn.close()
