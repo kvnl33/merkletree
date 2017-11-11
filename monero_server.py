@@ -146,19 +146,19 @@ def main():
     
 @app.route("/getroot", methods = ["GET"])
 def getroot():
-	'''This function returns the root of the top merkle tree, when requested by the client.
-	Whenever the top Merkle tree structure is updated, the function is also invoked.'''
+    '''This function returns the root of the top merkle tree, when requested by the client.
+    Whenever the top Merkle tree structure is updated, the function is also invoked.'''
     tr = {"root":top_root}
     return jsonify(tr)
 
 @app.route("/getout", methods = ["GET"])
 def getoutput():
-	'''This function will return the output and proof associated with the requested index.
-	It does this by first finding the block with the smallest global index greater than the 
-	requested index. Next, it will find the transaction with the smallest global index greater 
-	than the requested index. Afterwards, we will find the index, and return the data. To make sure
-	we did this step correctly, we also keep track of the Merkle proofs along the way, and return
-	them to the client as a tuple for them to check'''
+    '''This function will return the output and proof associated with the requested index.
+    It does this by first finding the block with the smallest global index greater than the 
+    requested index. Next, it will find the transaction with the smallest global index greater 
+    than the requested index. Afterwards, we will find the index, and return the data. To make sure
+    we did this step correctly, we also keep track of the Merkle proofs along the way, and return
+    them to the client as a tuple for them to check'''
     t = request.get_json()
     req_gidx = t["idx"]
     if req_gidx < 0 or req_gidx > top_root[1]:
@@ -180,8 +180,8 @@ def getoutput():
 
 @app.route("/getchildren", methods = ["GET"])
 def getchildren():
-	'''Calls the get children Merkle Tree function. If there is no "root" argument passed in,
-	we will get the children of the top root.'''
+    '''Calls the get children Merkle Tree function. If there is no "root" argument passed in,
+    we will get the children of the top root.'''
     t = request.get_json()
     if "root" in t:
         root = str(t["root"])
@@ -193,7 +193,7 @@ def getchildren():
 
 @app.route("/getnumleaves", methods = ["GET"])
 def getleaves():
-	'''Returns the number of leaves in a given root. If the root is invalid, we will return a failure.'''
+    '''Returns the number of leaves in a given root. If the root is invalid, we will return a failure.'''
     t = request.get_json()
     root = str(t["root"][0])
     if root in merkle_forest:
@@ -204,8 +204,8 @@ def getleaves():
 
 @app.route("/update", methods = ["POST"])
 def update_merkle():
-	'''Updates the Merkle Tree by calling the function add_adjust. It will return the new
-	root of the new top Merkle tree.'''
+    '''Updates the Merkle Tree by calling the function add_adjust. It will return the new
+    root of the new top Merkle tree.'''
     if utxos:
         del merkle_forest[top_root[0]]
         curr_block_hash = utxos[0][0]
