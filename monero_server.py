@@ -2,9 +2,7 @@
 from merkle import Node, MerkleTree, _check_proof, check_proof, print_tree, fetch_children_hash, get_num_leaves
 from hashlib import sha256
 from flask import Flask, request, jsonify
-import codecs, string, random, bisect, sqlite3, os.path
-import shelve
-# import numpy as np
+import codecs, string, random, bisect, sqlite3, os.path, shelve
 import cPickle as pickle
 app = Flask(__name__)
 
@@ -148,35 +146,45 @@ def main():
     
 @app.route("/getroot", methods = ["GET"])
 def getroot():
+	'''This function returns the root of the top merkle tree, when requested by the client.
+	Whenever the top Merkle tree structure is updated, the function is also invoked.'''
     tr = {"root":top_root}
     return jsonify(tr)
 
 @app.route("/getout", methods = ["GET"])
 def getoutput():
+	'''This function will return the output and proof associated with the requested index.
+	It does this by first finding the block with the smallest global index greater than the 
+	requested index. Next, it will find the transaction with the smallest global index greater 
+	than the requested index. Afterwards, we will find the index, and return the data. To make sure
+	we did this step correctly, we also keep track of the Merkle proofs along the way, and return
+	them to the client as a tuple for them to check'''
     t = request.get_json()
     req_gidx = t["idx"]
+    if req_gidx < 0 or req_gidx > top_root[1]:
+    	return jsonify({"Failure": 0})
+    else:
+	    found_block, blk_idx = find_ge([(leaf.data, leaf.idx) for leaf in top_merkle.leaves], req_gidx)
+	    blk_proof = top_merkle.get_proof(blk_idx)
+	    block_merkle = merkle_forest[found_block[0]]
 
-    found_block, blk_idx = find_ge([(leaf.data, leaf.idx) for leaf in top_merkle.leaves], req_gidx)
-    # write proof for block here
-    blk_proof = top_merkle.get_proof(blk_idx)
-    block_merkle = merkle_forest[found_block[0]]
+	    found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
+	    tx_proof = block_merkle.get_proof(tx_idx)
+	    tx_merkle = merkle_forest[found_tx[0]]
 
-    found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
-    # write proof for transaction over here
-    tx_proof = block_merkle.get_proof(tx_idx)
-    tx_merkle = merkle_forest[found_tx[0]]
+	    found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
+	    out_proof = tx_merkle.get_proof(output_idx)
 
-    found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
-    out_proof = tx_merkle.get_proof(output_idx)
-
-    path_proof = (out_proof,tx_proof,blk_proof)
-    return jsonify({"found":found_output, "proof":path_proof})
+	    path_proof = (out_proof,tx_proof,blk_proof)
+	    return jsonify({"found":found_output, "proof":path_proof})
 
 @app.route("/getchildren", methods = ["GET"])
 def getchildren():
+	'''Calls the get children Merkle Tree function. If there is no "root" argument passed in,
+	we will get the children of the top root.'''
     t = request.get_json()
     if "root" in t:
-        root = t["root"]
+        root = str(t["root"])
     else:
         root = top_root[0]
     path = t["path"]
@@ -185,8 +193,9 @@ def getchildren():
 
 @app.route("/getnumleaves", methods = ["GET"])
 def getleaves():
+	'''Returns the number of leaves in a given root. If the root is invalid, we will return a failure.'''
     t = request.get_json()
-    root = t["root"][0]
+    root = str(t["root"][0])
     if root in merkle_forest:
         data = get_num_leaves(merkle_forest[root])
         return jsonify({"data": data})
@@ -195,6 +204,8 @@ def getleaves():
 
 @app.route("/update", methods = ["POST"])
 def update_merkle():
+	'''Updates the Merkle Tree by calling the function add_adjust. It will return the new
+	root of the new top Merkle tree.'''
     if utxos:
         del merkle_forest[top_root[0]]
         curr_block_hash = utxos[0][0]
@@ -214,6 +225,3 @@ def update_merkle():
 if __name__ == '__main__':
     main()
     app.run(host='0.0.0.0')
-
-
-
