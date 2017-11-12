@@ -12,7 +12,15 @@ server1 = "http://148.100.99.174:5000"
 server2 = "http://148.100.4.151:5000"
 
 def block_verifier(m1, m2):
-	'''Searches for the block that is different in two servers'''
+	'''Searches for the block that is different in two servers. It will start by
+	sending challenges to the servers, asking the servers to return the left and right
+	child of the top Merkle root. If the left roots of the two servers are different, 
+	then continue our search on the left side. Otherwise, continue on the right side.
+	The search continues until we reach the block level, which is the leaf-level of the
+	Merkle Tree.  We continue this search on the block Merkle, until we reach the 
+	transaction in which the conflict is located in.'''
+	if m1 == m2:
+		raise ValueError("These roots are the same; there is no conflict.")
 	search = []
 	while True:
 		r1 = requests.get(server1+"/getchildren", json={"root":m1[0], "path":search[:]})
@@ -90,6 +98,12 @@ def block_verifier(m1, m2):
 			tx_root_2 = ldata_2
 	print tx_root_1
 	print tx_root_2
+	r1 = requests.get(server1+"/getnumleaves", json={"root":tx_root_1})
+	r2 = requests.get(server2+"/getnumleaves", json={"root":tx_root_2})
+	r1 = r1.json()
+	r2 = r2.json()
+	print "Server 1 has %d outputs at this transaction." %(r1["data"])
+	print "Server 2 has %d outputs at this transaction." %(r2["data"])
 
 def check_path(found_output, path_proof, top_root):
     '''This function, which is stored and run by the client, will check the Merkle proof returned
@@ -122,6 +136,8 @@ def check_path(found_output, path_proof, top_root):
 
 
 def get_output(top_root, idx):
+	'''Gets the output located at at a given server, and also returns the proof
+	associated. This is done by calling the server'''
 	assert top_root in [t1_root, t2_root]
 	if idx <= top_root[1] and idx >= 0:
 		if top_root == t1_root:

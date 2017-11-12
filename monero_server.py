@@ -42,7 +42,7 @@ def read_in_blocks(database_name):
     else:
         conn = sqlite3.connect("/data/"+database_name+".db")
         c_1 = conn.cursor()
-        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 1007''')
+        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx''')
         fetched = c_1.fetchall()
         pickle.dump(fetched, open("/data/"+database_name+".p", "wb" ))
         conn.close()
@@ -138,11 +138,6 @@ def check_path(found_output, path_proof):
                             if blkproof_merkle_root == top_root:
                                 return True
     return False
-
-def main():
-    read_in_blocks("rct_output_10_23_2017")
-    scan_over_new_blocks(utxos)
-    read_in_blocks("rct_output_11_05_2017")
     
 @app.route("/getroot", methods = ["GET"])
 def getroot():
@@ -221,6 +216,11 @@ def update_merkle():
         return getroot()
     else:
         return jsonify({"Failure": 0})
+
+def main():
+    read_in_blocks("rct_output_10_23_2017")
+    scan_over_new_blocks(utxos)
+    read_in_blocks("rct_output_11_05_2017")
 
 if __name__ == '__main__':
     main()
