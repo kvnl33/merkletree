@@ -134,22 +134,38 @@ def check_path(found_output, path_proof, top_root):
     							return True
     return False
 
-
-def get_output(top_root, idx):
+def get_output(server, idx):
 	'''Gets the output located at at a given server, and also returns the proof
 	associated. This is done by calling the server'''
-	assert top_root in [t1_root, t2_root]
+	assert server in [server1, server2]
+	top_root = t1_root if server==server1 else t2_root
 	if idx <= top_root[1] and idx >= 0:
-		if top_root == t1_root:
-			r = requests.get(server1+"/getout", json={"idx":idx})
-		else:
-			r = requests.get(server2+"/getout", json={"idx":idx})
+		r = requests.get(server+"/getout", json={"idx":idx})
 		r = r.json()
 		found_output = r["found"]
 		found_proof = r["proof"]
 		return found_output, found_proof
 	else:
-		raise ValueError("Server has not reached that global index yet")
+		raise ValueError("Invalid global index requested.")
+
+def update_server(server):
+	'''Get the updated top Merkle root at each server. This triggers the server side to 
+	read in new blocks and update its Merkle tree structure. In practice, we would want
+	the server to update itself without being called, and then periodically push a new
+	top root over to its client.'''
+	assert server in [server1, server2]
+	r = requests.post(server+"/update")
+	r = r.json()
+	if "Failure" in r:
+		raise Exception("Server is up to date.")
+	if server==server1:
+		global t1_root
+		t1_root = tuple(r["root"])
+		print "Server 1's top Merkle root has been updated."
+	else:
+		global t2_root
+		t2_root = tuple(r["root"])
+		print "Server 2's top Merkle root has been updated."
 
 def setup():
 	global t1_root, t2_root
