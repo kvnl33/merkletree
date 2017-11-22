@@ -18,3 +18,6 @@ def main():
     for x in range(0,10):
         passed = query_test()
         print passed
+        
+if __name__ == '__main__':
+    main()
