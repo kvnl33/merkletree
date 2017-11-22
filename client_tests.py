@@ -13,3 +13,8 @@ def query_test():
     end = time.time()
     elapsed = end - start
     return elapsed
+
+def main():
+    for x in range(0,10):
+        passed = query_test()
+        print passed
