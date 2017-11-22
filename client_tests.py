@@ -46,7 +46,7 @@ def main():
         print "Testing 1000 proofs..."
         for server in [server1, server2]:
             for x in range(0,500):
-                avg.append(query_test(server))
+                avg.append(proof_test(server))
         print "Average time to check proof for 1000 trials is %.6f seconds."%(np.average(avg))
     else:
         print "Please provide an argument"
