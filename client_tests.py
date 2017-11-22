@@ -23,10 +23,11 @@ def query_test(server):
 def main():
     if first_arg=="query":
         print "Testing 1000 queries..."
+        avg = []
         for server in [server1, server2]:
             for x in range(0,500):
-                passed = query_test(server)
-                print passed
+                avg.append(query_test(server))
+        print "Average query time for 1000 trials is %d seconds."%(numpy.average(avg))
     else:
         print "Please provide an argument"
         
