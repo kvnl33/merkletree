@@ -49,7 +49,7 @@ def main():
                 avg.append(proof_test(server))
         print "Average time to check proof for 1000 trials is %.6f seconds."%(np.average(avg))
     else:
-        print "Please provide an argument"
+        print "Please provide a valid argument."
         
 if __name__ == '__main__':
     main()
