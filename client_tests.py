@@ -27,7 +27,7 @@ def main():
         for server in [server1, server2]:
             for x in range(0,500):
                 avg.append(query_test(server))
-        print "Average query time for 1000 trials is %d seconds."%(numpy.average(avg))
+        print "Average query time for 1000 trials is %.6f seconds."%(np.average(avg))
     else:
         print "Please provide an argument"
         
