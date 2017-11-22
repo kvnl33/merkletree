@@ -26,4 +26,6 @@ def main():
             avg.append(build_time())
         print avg
         print "Average time to build data structure for 10 trials is %.6f seconds."%(np.average(avg))
-        
+
+if __name__ == '__main__':
+    main()
