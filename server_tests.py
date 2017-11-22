@@ -20,8 +20,6 @@ def main():
             print "Currently on iteration: %d"%(x+1)
             if os.path.isfile("/data/rct_output_10_23_2017.p"):
                 os.remove("/data/rct_output_10_23_2017.p")
-            if os.path.isfile("/data/merkle_forest"):
-                os.remove("/data/merkle_forest")
             avg.append(build_time())
         print avg
         print "Average time to build data structure for 100 trials is %.6f seconds."%(np.average(avg))
