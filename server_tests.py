@@ -8,7 +8,6 @@ def build_time():
     start = time.time()
     server.read_in_blocks("rct_output_10_23_2017")
     server.scan_over_new_blocks(server.utxos)
-    assert not server.utxos
     end = time.time()
     elapsed = end - start
     return elapsed
@@ -25,7 +24,7 @@ def main():
                 os.remove("/data/merkle_forest")
             avg.append(build_time())
         print avg
-        print "Average time to build data structure for 10 trials is %.6f seconds."%(np.average(avg))
+        print "Average time to build data structure for 100 trials is %.6f seconds."%(np.average(avg))
 
 if __name__ == '__main__':
     main()
