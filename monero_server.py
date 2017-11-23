@@ -138,6 +138,22 @@ def check_path(found_output, path_proof):
                             if blkproof_merkle_root == top_root:
                                 return True
     return False
+
+def update_test():
+    '''Updates the Merkle Tree by calling the function add_adjust. It will return the new
+    root of the new top Merkle tree. This is used by profiling function only!'''
+    if utxos:
+        del merkle_forest[top_root[0]]
+        curr_block_hash = utxos[0][0]
+        block_outkeys = []
+        while utxos[0][0] == curr_block_hash:
+            block_outkeys.append(utxos.pop(0))
+            if not utxos:
+                break
+        top_merkle.add_adjust(block_to_merkle(block_outkeys))
+        global top_root
+        top_root = (codecs.encode(top_merkle.root.val, 'hex_codec'), top_merkle.root.idx)
+        merkle_forest[codecs.encode(top_merkle.root.val, 'hex_codec')] = top_merkle
     
 @app.route("/getroot", methods = ["GET"])
 def getroot():
