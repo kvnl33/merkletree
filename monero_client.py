@@ -8,8 +8,11 @@ from collections import OrderedDict
 t1_root=t2_root=None
 hash_function = sha256
 
-server1 = "http://148.100.99.174:5000"
-server2 = "http://148.100.4.151:5000"
+# server1 = "http://148.100.99.174:5000"
+# server2 = "http://148.100.4.151:5000"
+# Run this from the notebook server
+server1 = "http://148.100.4.151:5000"
+server2 = "http://localhost:5000"
 
 def block_verifier(m1, m2):
 	'''Searches for the block that is different in two servers. It will start by
@@ -104,6 +107,7 @@ def block_verifier(m1, m2):
 	r2 = r2.json()
 	print "Server 1 has %d outputs at this transaction." %(r1["data"])
 	print "Server 2 has %d outputs at this transaction." %(r2["data"])
+	return r1["data"], r2["data"]
 
 def check_path(found_output, path_proof, top_root):
     '''This function, which is stored and run by the client, will check the Merkle proof returned
