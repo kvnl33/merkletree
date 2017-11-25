@@ -6,6 +6,10 @@ import codecs, string, random, bisect, sqlite3, os.path, shelve
 import cPickle as pickle
 app = Flask(__name__)
 
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 hash_function = sha256
 utxos = []
 

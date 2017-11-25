@@ -5,6 +5,8 @@ import monero_server as server
 first_arg = sys.argv[1]
 
 def build_time():
+    '''Tests the average build time of the server without any of the initial data structures.
+    We return the average time it takes for a build to complete.'''
     start = time.time()
     server.read_in_blocks("rct_output_10_23_2017")
     server.scan_over_new_blocks(server.utxos)
@@ -13,6 +15,8 @@ def build_time():
     return elapsed
 
 def add_adjust():
+    '''Tests the average time it takes for the server to add new blocks into the 3-layer
+    Merkle tree design.'''
     server.main()
     print "Profiling adding to the top Merkle tree..."
     avg = []

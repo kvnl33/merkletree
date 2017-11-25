@@ -61,8 +61,15 @@ def block_verifier(m1, m2):
 			block_root_1 = ldata_1
 			block_root_2 = ldata_2
 
-	print block_root_1
-	print block_root_2
+	# print block_root_1
+	# print block_root_2
+
+	r1 = requests.get(server1+"/getnumleaves", json={"root":block_root_1})
+	r2 = requests.get(server2+"/getnumleaves", json={"root":block_root_2})
+	r1 = r1.json()
+	r2 = r2.json()
+	# print "Server 1 has %d outputs at this block." %(r1["data"])
+	# print "Server 2 has %d outputs at this block." %(r2["data"])
 
 	# empty the list to do a search for the transaction-level now
 	search[:] = []
@@ -99,14 +106,16 @@ def block_verifier(m1, m2):
 		else:
 			tx_root_1 = ldata_1
 			tx_root_2 = ldata_2
-	print tx_root_1
-	print tx_root_2
+	# print tx_root_1
+	# print tx_root_2
 	r1 = requests.get(server1+"/getnumleaves", json={"root":tx_root_1})
 	r2 = requests.get(server2+"/getnumleaves", json={"root":tx_root_2})
 	r1 = r1.json()
 	r2 = r2.json()
-	print "Server 1 has %d outputs at this transaction." %(r1["data"])
-	print "Server 2 has %d outputs at this transaction." %(r2["data"])
+	# print r1
+	# print r2
+	# print "Server 1 has %d outputs at this transaction." %(r1["data"])
+	# print "Server 2 has %d outputs at this transaction." %(r2["data"])
 	return r1["data"], r2["data"]
 
 def check_path(found_output, path_proof, top_root):

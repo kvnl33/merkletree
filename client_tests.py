@@ -8,6 +8,7 @@ first_arg = sys.argv[1]
 server1, server2 = client.server1, client.server2
 
 def testup():
+    '''Tests if the our local server is up running. If it is up, we will return 1.'''
     try:
         requests.get(server2+"/getroot")
         return 1
@@ -15,9 +16,11 @@ def testup():
         return 0
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    '''Generates a random string. We use this in generating errors in the blocks.'''
     return ''.join(random.choice(chars) for _ in range(size))
 
 def cleanup():
+    ''''''
     if os.path.isfile("/data/rct_output_10_23_2017.p"):
         os.remove("/data/rct_output_10_23_2017.p")
     if os.path.isfile("/data/rct_output_10_23_2017.p"):
@@ -26,6 +29,11 @@ def cleanup():
         os.remove("/data/merkle_forest")
 
 def conflict_resolve():
+    '''This test simulates a conflict resolution by generating a conflict in 
+    one of the outputs on our local side. We do this by picking a random output 
+    and modifying its output key. When that happens, the Merkle root will 
+    definitely change, and we run our conflict protocol as such. We do profiling
+    on the amount of time taken to find the conflict.'''
     cleanup()
     server.read_in_blocks("rct_output_10_23_2017")
     modify = random.choice(server.utxos)
@@ -41,11 +49,16 @@ def conflict_resolve():
             break
     client.main()
     t1_root, t2_root = client.t1_root, client.t2_root
+    start = time.time()
     client.block_verifier(t1_root, t2_root)
-    print "The number of outputs in this transaction is %d" %(num_outs)
+    end = time.time()
     pid.terminate()
+    elapsed = end - start
+    return elapsed
     
 def query_test(server):
+    '''Tests the servers to see how fast they respond to successful queries. We test
+    each of the servers.'''
     if server == server1:
         top = t1_root
     else:
@@ -58,6 +71,7 @@ def query_test(server):
     return elapsed
 
 def proof_test(server):
+    '''Tests the client in how fast it can complete a proof.'''
     if server == server1:
         top = t1_root
     else:
@@ -89,7 +103,10 @@ def main():
     elif first_arg=="conflict":
         avg = []
         print "Testing conflicts (this can take a while...)"
-        conflict_resolve()
+        for x in range(0,100):
+            print "Currently on iteration %d..."%(x+1)
+            avg.append(conflict_resolve())
+        print "Average time to resolve conflicts for 100 trials is %.6f seconds."%(np.average(avg))
     else:
         print "Please provide a valid argument."
         
