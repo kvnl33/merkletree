@@ -237,28 +237,32 @@ def fetch_children_hash(m, path=[]):
     the tree, following the path provided. If none provided, just return the two subtree nodes
     of the top of the tree"""
     the_node = m.root
-    for direction in path:
-        assert direction in ['l','r']
-        left_child = the_node.l
-        right_child = the_node.r
-        if left_child == right_child == None:
-            break
-        if direction == 'l':
-            the_node = left_child
+    if get_num_leaves(m) == 1:
+        lhash=rhash=codecs.encode(the_node.val, 'hex_codec')
+        ldata=rdata=the_node.data
+    else: 
+        for direction in path:
+            assert direction in ['l','r']
+            left_child = the_node.l
+            right_child = the_node.r
+            if left_child == right_child == None:
+                break
+            if direction == 'l':
+                the_node = left_child
+            else:
+                the_node = right_child
+        lc = the_node.l
+        rc = the_node.r
+        if lc:
+            lhash = codecs.encode(lc.val, 'hex_codec')
+            ldata = lc.data if lc.data else None
         else:
-            the_node = right_child
-    lc = the_node.l
-    rc = the_node.r
-    if lc:
-        lhash = codecs.encode(lc.val, 'hex_codec')
-        ldata = lc.data if lc.data else None
-    else:
-        lhash = None
-        ldata = None
-    if rc:
-        rhash = codecs.encode(rc.val, 'hex_codec')
-        rdata = rc.data if rc.data else None
-    else:
-        rhash = None
-        rdata = None
+            lhash = None
+            ldata = None
+        if rc:
+            rhash = codecs.encode(rc.val, 'hex_codec')
+            rdata = rc.data if rc.data else None
+        else:
+            rhash = None
+            rdata = None
     return (lhash, rhash, ldata, rdata) 
