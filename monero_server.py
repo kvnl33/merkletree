@@ -206,7 +206,7 @@ def getchildren():
 def getleaves():
     '''Returns the number of leaves in a given root. If the root is invalid, we will return a failure.'''
     t = request.get_json()
-    root = str(t["root"][0])
+    root = str(t["root"])
     if root in merkle_forest:
         data = get_num_leaves(merkle_forest[root])
         return jsonify({"data": data})
