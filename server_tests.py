@@ -32,7 +32,7 @@ def main():
     if first_arg=="build":
         print "Profiling build time..."
         avg = []
-        for x in range(0,10):
+        for x in range(0,100):
             print "Currently on iteration: %d"%(x+1)
             if os.path.isfile("/data/rct_output_10_23_2017.p"):
                 os.remove("/data/rct_output_10_23_2017.p")

@@ -1,5 +1,7 @@
 import time, sys, requests, os, random, string
 import monero_client as client
+if os.path.isfile("/data/merkle_forest"):
+	os.remove("/data/merkle_forest")
 import monero_server as server
 import numpy as np
 from multiprocessing import Process
@@ -20,13 +22,12 @@ def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 def cleanup():
-    ''''''
+    '''Cleanup any pickle files that were generated so we can get a full sense of memory usage
+    and time.'''
     if os.path.isfile("/data/rct_output_10_23_2017.p"):
         os.remove("/data/rct_output_10_23_2017.p")
     if os.path.isfile("/data/rct_output_10_23_2017.p"):
         os.remove("/data/rct_output_10_23_2017.p")
-    if os.path.isfile("/data/merkle_forest"):
-        os.remove("/data/merkle_forest")
 
 def conflict_resolve():
     '''This test simulates a conflict resolution by generating a conflict in 
@@ -101,12 +102,10 @@ def main():
                 avg.append(proof_test(server))
         print "Average time to check proof for 1000 trials is %.6f seconds."%(np.average(avg))
     elif first_arg=="conflict":
-        avg = []
         print "Testing conflicts (this can take a while...)"
-        for x in range(0,100):
-            print "Currently on iteration %d..."%(x+1)
-            avg.append(conflict_resolve())
-        print "Average time to resolve conflicts for 100 trials is %.6f seconds."%(np.average(avg))
+        f = open("/data/tests/conflict.txt", "a")
+        f.write("%.6f\n"%(conflict_resolve()))
+        f.close()
     else:
         print "Please provide a valid argument."
         
