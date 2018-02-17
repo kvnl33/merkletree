@@ -24,8 +24,8 @@ def cleanup():
     and time.'''
     if os.path.isfile("/data/rct_output_10_23_2017.p"):
         os.remove("/data/rct_output_10_23_2017.p")
-    if os.path.isfile("/data/rct_output_10_23_2017.p"):
-        os.remove("/data/rct_output_10_23_2017.p")
+    if os.path.isfile("/data/rct_output_11_05_2017.p"):
+        os.remove("/data/rct_output_11_05_2017.p")
 
 def conflict_resolve():
     '''This test simulates a conflict resolution by generating a conflict in 
@@ -33,7 +33,7 @@ def conflict_resolve():
     and modifying its output key. When that happens, the Merkle root will 
     definitely change, and we run our conflict protocol as such. We do profiling
     on the amount of time taken to find the conflict.'''
-    cleanup()
+    # cleanup()
     server.read_in_blocks("rct_output_10_23_2017")
     modify = random.choice(server.utxos)
     idx = server.utxos.index(modify)
@@ -101,7 +101,7 @@ def main():
         print "Average time to check proof for 1000 trials is %.6f seconds."%(np.average(avg))
     elif first_arg=="conflict":
         print "Testing conflicts (this can take a while...)"
-        f = open("/data/tests/conflict.txt", "a")
+        f = open("/data/tests/conflict_1.txt", "a")
         f.write("%.6f\n"%(conflict_resolve()))
         f.close()
     else:

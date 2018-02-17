@@ -1,15 +1,14 @@
 from merkle import Node, MerkleTree, _check_proof, check_proof, print_tree, fetch_children_hash, get_num_leaves
-import codecs, string, random, bisect, sqlite3, os.path, requests
+import codecs, string, random, bisect, sqlite3, os.path, requests, grequests
 import numpy as np
 from random import randint
 from hashlib import sha256
-from collections import OrderedDict
 
 t1_root=t2_root=None
 hash_function = sha256
 
 server1 = "http://148.100.99.174:5000"
-server2 = "http://148.100.4.151:5000"
+server2 = "http://localhost:5000"
 
 def block_verifier(m1, m2):
 	'''Searches for the block that is different in two servers. It will start by
@@ -23,8 +22,10 @@ def block_verifier(m1, m2):
 		raise ValueError("These roots are the same; there is no conflict.")
 	search = []
 	while True:
-		r1 = requests.get(server1+"/getchildren", json={"root":m1[0], "path":search[:]})
-		r2 = requests.get(server2+"/getchildren", json={"root":m2[0], "path":search[:]})
+		rs = [grequests.get(server1+"/getchildren", json={"root":m1[0],"path":search[:]}) , grequests.get(server2+"/getchildren", json={"root":m2[0], "path":search[:]})]
+		r1, r2 = grequests.map(rs)
+		# r1 = requests.get(server1+"/getchildren", json={"root":m1[0], "path":search[:]})
+		# r2 = requests.get(server2+"/getchildren", json={"root":m2[0], "path":search[:]})
 		r1 = r1.json()
 		r2 = r2.json()
 		(lhash_1, rhash_1, ldata_1, rdata_1) = tuple(r1["data"])
@@ -61,18 +62,20 @@ def block_verifier(m1, m2):
 	# print block_root_1
 	# print block_root_2
 
-	r1 = requests.get(server1+"/getnumleaves", json={"root":block_root_1})
-	r2 = requests.get(server2+"/getnumleaves", json={"root":block_root_2})
-	r1 = r1.json()
-	r2 = r2.json()
-	print "Server 1 has %d transactions at this block." %(r1["data"])
-	print "Server 2 has %d transactions at this block." %(r2["data"])
+	# r1 = requests.get(server1+"/getnumleaves", json={"root":block_root_1})
+	# r2 = requests.get(server2+"/getnumleaves", json={"root":block_root_2})
+	# r1 = r1.json()
+	# r2 = r2.json()
+	# print "Server 1 has %d outputs at this block." %(r1["data"])
+	# print "Server 2 has %d outputs at this block." %(r2["data"])
 
 	# empty the list to do a search for the transaction-level now
 	search[:] = []
 	while True:
-		r1 = requests.get(server1+"/getchildren", json={"root":block_root_1, "path":search[:]})
-		r2 = requests.get(server2+"/getchildren", json={"root":block_root_2, "path":search[:]})
+		rs = [grequests.get(server1+"/getchildren", json={"root":block_root_1, "path":search[:]}), grequests.get(server2+"/getchildren", json={"root":block_root_2, "path":search[:]})]
+		r1, r2 = grequests.map(rs)
+		# r1 = requests.get(server1+"/getchildren", json={"root":block_root_1, "path":search[:]})
+		# r2 = requests.get(server2+"/getchildren", json={"root":block_root_2, "path":search[:]})
 		r1 = r1.json()
 		r2 = r2.json()
 		(lhash_1, rhash_1, ldata_1, rdata_1) = tuple(r1["data"])
@@ -105,14 +108,16 @@ def block_verifier(m1, m2):
 			tx_root_2 = ldata_2
 	# print tx_root_1
 	# print tx_root_2
-	r1 = requests.get(server1+"/getnumleaves", json={"root":tx_root_1})
-	r2 = requests.get(server2+"/getnumleaves", json={"root":tx_root_2})
+	rs = [grequests.get(server1+"/getnumleaves", json={"root":tx_root_1}), grequests.get(server2+"/getnumleaves", json={"root":tx_root_2})]
+	r1, r2 = grequests.map(rs)
+	# r1 = requests.get(server1+"/getnumleaves", json={"root":tx_root_1})
+	# r2 = requests.get(server2+"/getnumleaves", json={"root":tx_root_2})
 	r1 = r1.json()
 	r2 = r2.json()
 	# print r1
 	# print r2
-	print "Server 1 has %d outputs at this transaction." %(r1["data"])
-	print "Server 2 has %d outputs at this transaction." %(r2["data"])
+	# print "Server 1 has %d outputs at this transaction." %(r1["data"])
+	# print "Server 2 has %d outputs at this transaction." %(r2["data"])
 	return r1["data"], r2["data"]
 
 def check_path(found_output, path_proof, top_root):

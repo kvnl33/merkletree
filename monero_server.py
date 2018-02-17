@@ -15,7 +15,7 @@ app = Flask(__name__)
 hash_function = sha256
 utxos = []
 
-merkle_forest = OrderedDict
+merkle_forest = OrderedDict()
 
 top_root = None
 top_merkle = None
@@ -48,7 +48,7 @@ def read_in_blocks(database_name):
     else:
         conn = sqlite3.connect("/data/"+database_name+".db")
         c_1 = conn.cursor()
-        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx''')
+        c_1.execute('''SELECT block_hash, tx_hash, outkey, idx FROM out_table ORDER BY idx LIMIT 200''')
         fetched = c_1.fetchall()
         pickle.dump(fetched, open("/data/"+database_name+".p", "wb" ))
         conn.close()
