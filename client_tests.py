@@ -1,7 +1,5 @@
 import time, sys, requests, os, random, string
 import monero_client as client
-if os.path.isfile("/data/merkle_forest"):
-	os.remove("/data/merkle_forest")
 import monero_server as server
 import numpy as np
 from multiprocessing import Process

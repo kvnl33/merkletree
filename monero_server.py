@@ -2,7 +2,8 @@
 from merkle import Node, MerkleTree, _check_proof, check_proof, print_tree, fetch_children_hash, get_num_leaves
 from hashlib import sha256
 from flask import Flask, request, jsonify
-import codecs, string, random, bisect, sqlite3, os.path, shelve
+from collections import OrderedDict
+import codecs, string, random, bisect, sqlite3, os.path
 import cPickle as pickle
 app = Flask(__name__)
 
@@ -14,7 +15,7 @@ app = Flask(__name__)
 hash_function = sha256
 utxos = []
 
-merkle_forest = shelve.open("/data/merkle_forest", protocol=-1)
+merkle_forest = OrderedDict
 
 top_root = None
 top_merkle = None
