@@ -7,8 +7,8 @@ from hashlib import sha256
 t1_root=t2_root=None
 hash_function = sha256
 
-server1 = "http://148.100.99.174:5000"
-server2 = "http://localhost:5000"
+server1 = "SET ADDRESS HERE"
+server2 = "SET ADDRESS HERE"
 
 def block_verifier(m1, m2):
 	'''Searches for the block that is different in two servers. It will start by
@@ -17,7 +17,8 @@ def block_verifier(m1, m2):
 	then continue our search on the left side. Otherwise, continue on the right side.
 	The search continues until we reach the block level, which is the leaf-level of the
 	Merkle Tree.  We continue this search on the block Merkle, until we reach the 
-	transaction in which the conflict is located in.'''
+	transaction in which the conflict is located in.
+	UPDATE: RDOC round has been made faster by making calls synchronous.'''
 	if m1 == m2:
 		raise ValueError("These roots are the same; there is no conflict.")
 	search = []
@@ -163,6 +164,22 @@ def get_output(server, idx):
 	else:
 		raise ValueError("Invalid global index requested.")
 
+def get_outputs(server, indices=[]):
+	'''Gets the outputs located at at a given server, and also returns the proofs
+	associated. This is done for multiple indices.'''
+	assert server in [server1, server2]
+	top_root = t1_root if server==server1 else t2_root
+	if all(idx <= top_root[1] and idx >= 0 for idx in indices):
+		output_list = []
+		r = requests.get(server+"/getouts", json={"idx":indices})
+		r = r.json()
+		results = r["results"]
+		for rs in results:
+			output_list.append((rs["found"], rs["proof"]))
+		return output_list
+	else:
+		raise ValueError("Invalid global index requested.")
+
 def update_server(server):
 	'''Get the updated top Merkle root at each server. This triggers the server side to 
 	read in new blocks and update its Merkle tree structure. In practice, we would want
@@ -183,6 +200,7 @@ def update_server(server):
 		print "Server 2's top Merkle root has been updated."
 
 def setup():
+	'''Sets up the client and connects it to the 2 remote nodes we use in our tests.'''
 	global t1_root, t2_root
 	r1 = requests.get(server1+"/getroot")
 	r1 = r1.json()

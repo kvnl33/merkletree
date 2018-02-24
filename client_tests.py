@@ -28,7 +28,7 @@ def cleanup():
         os.remove("/data/rct_output_11_05_2017.p")
 
 def conflict_resolve():
-    '''This test simulates a conflict resolution by generating a conflict in 
+    '''This test simulates a RDOC by generating a conflict in 
     one of the outputs on our local side. We do this by picking a random output 
     and modifying its output key. When that happens, the Merkle root will 
     definitely change, and we run our conflict protocol as such. We do profiling

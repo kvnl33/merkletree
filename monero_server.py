@@ -195,6 +195,31 @@ def getoutput():
 	    path_proof = (out_proof,tx_proof,blk_proof)
 	    return jsonify({"found":found_output, "proof":path_proof})
 
+@app.route("/getouts", methods = ["GET"])
+def getoutputs():
+    '''Similar to get output, but retreives multiple outputs with one request'''
+    t = request.get_json()
+    req_gidxs = t["idx"]
+    query_results = []
+    for req_gidx in req_gidxs:
+        if req_gidx < 0 or req_gidx > top_root[1]:
+            return jsonify({"Failure": 0})
+        else:
+            found_block, blk_idx = find_ge([(leaf.data, leaf.idx) for leaf in top_merkle.leaves], req_gidx)
+            blk_proof = top_merkle.get_proof(blk_idx)
+            block_merkle = merkle_forest[found_block[0]]
+
+            found_tx, tx_idx = find_ge([(leaf.data,leaf.idx) for leaf in block_merkle.leaves], req_gidx)
+            tx_proof = block_merkle.get_proof(tx_idx)
+            tx_merkle = merkle_forest[found_tx[0]]
+
+            found_output, output_idx = find_ge([(leaf.data,leaf.idx) for leaf in tx_merkle.leaves], req_gidx)
+            out_proof = tx_merkle.get_proof(output_idx)
+
+            path_proof = (out_proof,tx_proof,blk_proof)
+            query_results.append({"found":found_output, "proof":path_proof})
+    return jsonify(results=query_results)
+
 @app.route("/getchildren", methods = ["GET"])
 def getchildren():
     '''Calls the get children Merkle Tree function. If there is no "root" argument passed in,
